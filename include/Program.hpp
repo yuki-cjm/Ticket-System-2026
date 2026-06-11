@@ -8,6 +8,7 @@
 #include "TrainManager.hpp"
 #include "STLite/vector.hpp"
 #include "STLite/pair.hpp"
+#include "STLite/map.hpp"
 
 class Program {
   private:
@@ -16,6 +17,7 @@ class Program {
     AccountManager accountmanager;
     TrainManager trainmanager;
     Parser parser;
+    sjtu::map<std::string, int> loginrecorder;
 
     bool programEnd_;
 

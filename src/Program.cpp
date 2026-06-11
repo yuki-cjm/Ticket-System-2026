@@ -3,8 +3,12 @@
 #include <fstream>
 
 #include "Program.hpp"
+#include "AccountManager.hpp"
 #include "STLite/vector.hpp"
 #include "STLite/pair.hpp"
+#include "STLite/map.hpp"
+
+struct Account;
 
 Program::Program() : total_filename("total") {
     total_file.open(total_filename, std::ios::in | std::ios::out | std::ios::binary);
@@ -19,6 +23,7 @@ Program::Program() : total_filename("total") {
         total_file.read(reinterpret_cast<char*>(&account_count), 4);
         accountmanager.changeCount(account_count);
     }
+    loginrecorder.clear();
 }
 
 Program::~Program() {
@@ -41,43 +46,140 @@ bool Program::programRun() {
 }
 
 void Program::AddUser(const std::string &cur_username, const std::string &username, const std::string &password, const std::string &name, const std::string &mailAddr, int privilege) {
-    std::cout << "cur_username: " << cur_username << '\n';
-    std::cout << "username: " << username << '\n';
-    std::cout << "password: " << password << '\n';
-    std::cout << "name: " << name << '\n';
-    std::cout << "mailAddr: " << mailAddr << '\n';
-    std::cout << "privilege: " << privilege << std::endl;
+    // std::cout << "cur_username: " << cur_username << '\n';
+    // std::cout << "username: " << username << '\n';
+    // std::cout << "password: " << password << '\n';
+    // std::cout << "name: " << name << '\n';
+    // std::cout << "mailAddr: " << mailAddr << '\n';
+    // std::cout << "privilege: " << privilege << std::endl;
+
+    if (accountmanager.getCount() == 0) {
+        accountmanager.addAccount(username, password, name, mailAddr, 10);
+        std::cout << "0" << std::endl;
+        return;
+    }
+    if (loginrecorder.find(cur_username) == loginrecorder.end()) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    int cur_privilege = loginrecorder[cur_username];
+    if (privilege >= cur_privilege) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    if (accountmanager.getIndex(username) != -1) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    accountmanager.addAccount(username, password, name, mailAddr, privilege);
+    std::cout << "0" << std::endl;
 }
 
 void Program::Login(const std::string &username, const std::string &password) {
-    std::cout << "username: " << username << '\n';
-    std::cout << "password: " << password << std::endl;
+    // std::cout << "username: " << username << '\n';
+    // std::cout << "password: " << password << std::endl;
+    int index = accountmanager.getIndex(username);
+    if (index == -1) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    if (loginrecorder.find(username) != loginrecorder.end()) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    Account account = accountmanager.getAccount(index);
+    if (account.password == password) {
+        loginrecorder.insert(sjtu::pair(username, account.privilege));
+        std::cout << "0" << std::endl;
+        return;
+    }
+    std::cout << "-1" << std::endl;
 }
 
 void Program::Logout(const std::string &username) {
-    std::cout << "username: " << username << std::endl;
+    // std::cout << "username: " << username << std::endl;
+    auto it = loginrecorder.find(username);
+    if (it == loginrecorder.end()) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    loginrecorder.erase(it);
+    std::cout << "0" << std::endl;
 }
 
 void Program::QueryProfile(const std::string &cur_username, const std::string &username) {
-    std::cout << "cur_username: " << cur_username << '\n';
-    std::cout << "username: " << username << std::endl;
+    // std::cout << "cur_username: " << cur_username << '\n';
+    // std::cout << "username: " << username << std::endl;
+    auto it = loginrecorder.find(cur_username);
+    if (it == loginrecorder.end()) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    int index = accountmanager.getIndex(username);
+    if (index == -1) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    Account account = accountmanager.getAccount(index);
+    if (it->second < account.privilege || it->second == account.privilege && cur_username != username) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    std::cout << username << ' ' << account.name << ' ' << account.mailAddr << ' ' << account.privilege << std::endl;
 }
 
 void Program::ModifyProfile(const std::string &cur_username, const std::string &username, const std::string &password, const std::string &name, const std::string &mailAddr, int privilege) {
-    std::cout << "cur_username: " << cur_username << '\n';
-    std::cout << "username: " << username << std::endl;
+    // std::cout << "cur_username: " << cur_username << '\n';
+    // std::cout << "username: " << username << std::endl;
+    // if (!password.empty()) {
+    //     std::cout << "password: " << password << std::endl;
+    // }
+    // if (!name.empty()) {
+    //     std::cout << "name: " << name << std::endl;
+    // }
+    // if (!mailAddr.empty()) {
+    //     std::cout << "mailAddr: " << mailAddr << std::endl;
+    // }
+    // if (privilege != -1) {
+    //     std::cout << "privilege: " << privilege << std::endl;
+    // }
+    auto it = loginrecorder.find(cur_username);
+    if (it == loginrecorder.end()) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    if (privilege != -1 && privilege >= it->second) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    int index = accountmanager.getIndex(username);
+    if (index == -1) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    Account account = accountmanager.getAccount(index);
+    if (it->second < account.privilege || it->second == account.privilege && cur_username != username) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
     if (!password.empty()) {
-        std::cout << "password: " << password << std::endl;
+        account.password = password;
     }
     if (!name.empty()) {
-        std::cout << "name: " << name << std::endl;
+        account.name = name;
     }
     if (!mailAddr.empty()) {
-        std::cout << "mailAddr: " << mailAddr << std::endl;
+        account.mailAddr = mailAddr;
     }
     if (privilege != -1) {
-        std::cout << "privilege: " << privilege << std::endl;
+        account.privilege = privilege;
+        auto it2 = loginrecorder.find(username);
+        if (it2 != loginrecorder.end()) {
+            it2->second = privilege;
+        }
     }
+    accountmanager.writeAccount(index, account);
+    std::cout << username << ' ' << account.name << ' ' << account.mailAddr << ' ' << account.privilege << std::endl;
 }
 
 void Program::AddTrain(const std::string &trainID, int stationNum, int seatNum, sjtu::vector<std::string> &stations, sjtu::vector<int> &prices, int startTime, sjtu::vector<int> &travelTimes, sjtu::vector<int> &stopoverTimes, sjtu::pair<int, int> saleDate, char type) {
@@ -172,4 +274,5 @@ void Program::Clean() {
 
 void Program::Exit() {
     programEnd_ = true;
+    std::cout << "bye" << std::endl;
 }

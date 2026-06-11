@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 
-#include "utils/Error.hpp"
 #include "STLite/vector.hpp"
 #include "Parser.hpp"
 #include "Program.hpp"
@@ -262,7 +261,8 @@ std::string getword(int &pointer, const std::string &line, bool &error, wordType
 void Parser::parseLine(const std::string &line, Program *program) {
     int pointer{0};
     bool error = false;
-    getword(pointer, line, error);
+    std::string timestamp = getword(pointer, line, error);
+    std::cout << timestamp << ' ';
     std::string instrument{getword(pointer, line, error)};
          if (instrument == "add_user")       parseAddUser      (pointer, line, program);
     else if (instrument == "login")          parseLogin        (pointer, line, program);
@@ -284,7 +284,7 @@ void Parser::parseLine(const std::string &line, Program *program) {
 }
 
 void Parser::parseAddUser(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseAddUser" << std::endl;
+    // std::cout << "parseAddUser" << std::endl;
     std::string key, cur_username, username, password, name, mailAddr;
     int privilege;
     bool error = false;
@@ -363,7 +363,7 @@ void Parser::parseAddUser(int &pointer, const std::string &line, Program *progra
 }
 
 void Parser::parseLogin(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseLogin" << std::endl;
+    // std::cout << "parseLogin" << std::endl;
     std::string key, username, password;
     bool error = false;
     bool getu, getp;
@@ -401,7 +401,7 @@ void Parser::parseLogin(int &pointer, const std::string &line, Program *program)
 }
 
 void Parser::parseLogout(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseLogout" << std::endl;
+    // std::cout << "parseLogout" << std::endl;
     std::string key, username;
     bool error = false;
     key = getword(pointer, line, error);
@@ -419,7 +419,7 @@ void Parser::parseLogout(int &pointer, const std::string &line, Program *program
 }
 
 void Parser::parseQueryProfile(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseQueryProfile" << std::endl;
+    // std::cout << "parseQueryProfile" << std::endl;
     std::string key, cur_username, username;
     bool error = false;
     bool getc, getu;
@@ -457,7 +457,7 @@ void Parser::parseQueryProfile(int &pointer, const std::string &line, Program *p
 }
 
 void Parser::parseModifyProfile(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseModifyProfile" << std::endl;
+    // std::cout << "parseModifyProfile" << std::endl;
     std::string key, cur_username{}, username{}, password{}, name{}, mailAddr{};
     int privilege = -1;
     bool error = false;
@@ -536,7 +536,7 @@ void Parser::parseModifyProfile(int &pointer, const std::string &line, Program *
 }
 
 void Parser::parseAddTrain(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseAddTrain" << std::endl;
+    // std::cout << "parseAddTrain" << std::endl;
     std::string key, trainID;
     int stationNum, seatNum, startTime;
     sjtu::vector<std::string> stations;
@@ -660,7 +660,7 @@ void Parser::parseAddTrain(int &pointer, const std::string &line, Program *progr
 }
 
 void Parser::parseDeleteTrain(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseDeleteTrain" << std::endl;
+    // std::cout << "parseDeleteTrain" << std::endl;
     std::string key, trainID;
     bool error = false;
     key = getword(pointer, line, error);
@@ -678,7 +678,7 @@ void Parser::parseDeleteTrain(int &pointer, const std::string &line, Program *pr
 }
 
 void Parser::parseReleaseTrain(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseReleaseTrain" << std::endl;
+    // std::cout << "parseReleaseTrain" << std::endl;
     std::string key, trainID;
     bool error = false;
     key = getword(pointer, line, error);
@@ -696,7 +696,7 @@ void Parser::parseReleaseTrain(int &pointer, const std::string &line, Program *p
 }
 
 void Parser::parseQueryTrain(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseQueryTrain" << std::endl;
+    // std::cout << "parseQueryTrain" << std::endl;
     std::string key, trainID;
     int date;
     bool geti = false, getd = false;
@@ -730,7 +730,7 @@ void Parser::parseQueryTrain(int &pointer, const std::string &line, Program *pro
 }
 
 void Parser::parseQueryTicket(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseQueryTicket" << std::endl;
+    // std::cout << "parseQueryTicket" << std::endl;
     std::string key, station1, station2;
     bool query_type; // 0->time, 1->cost
     int date;
@@ -799,7 +799,7 @@ void Parser::parseQueryTicket(int &pointer, const std::string &line, Program *pr
 }
 
 void Parser::parseQueryTransfer(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseQueryTransfer" << std::endl;
+    // std::cout << "parseQueryTransfer" << std::endl;
     std::string key, station1, station2;
     bool query_type; // 0->time, 1->cost
     int date;
@@ -867,7 +867,7 @@ void Parser::parseQueryTransfer(int &pointer, const std::string &line, Program *
 }
 
 void Parser::parseBuyTicket(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseBuyTicket" << std::endl;
+    // std::cout << "parseBuyTicket" << std::endl;
     std::string key, username, trainID, station1, station2;
     int date, ticketnum;
     bool buy_type;
@@ -959,7 +959,7 @@ void Parser::parseBuyTicket(int &pointer, const std::string &line, Program *prog
 }
 
 void Parser::parseQueryOrder(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseQueryOrder" << std::endl;
+    // std::cout << "parseQueryOrder" << std::endl;
     std::string key, username;
     bool error = true;
     key = getword(pointer, line, error);
@@ -977,7 +977,7 @@ void Parser::parseQueryOrder(int &pointer, const std::string &line, Program *pro
 }
 
 void Parser::parseRefundTicket(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseRefundTicket" << std::endl;
+    // std::cout << "parseRefundTicket" << std::endl;
     std::string key, username;
     int ticketnum;
     bool getu = false, getn = false;
@@ -1020,7 +1020,7 @@ void Parser::parseRefundTicket(int &pointer, const std::string &line, Program *p
 }
 
 void Parser::parseClean(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseClean" << std::endl;
+    // std::cout << "parseClean" << std::endl;
     bool error = false;
     if (!getword(pointer, line, error).empty()) {
         std::cout << "-1" << std::endl;
@@ -1030,7 +1030,7 @@ void Parser::parseClean(int &pointer, const std::string &line, Program *program)
 }
 
 void Parser::parseExit(int &pointer, const std::string &line, Program *program) {
-    std::cout << "parseExit" << std::endl;
+    // std::cout << "parseExit" << std::endl;
     bool error = false;
     if (!getword(pointer, line, error).empty()) {
         std::cout << "-1" << std::endl;

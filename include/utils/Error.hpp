@@ -34,10 +34,6 @@ class container_is_empty : public TicketSystemError {
     /* __________________________ */
 };
 
-class invalid_input : public TicketSystemError {
-    /* __________________________ */
-};
-
 class unknown_order : public TicketSystemError {
     /* __________________________ */
 };

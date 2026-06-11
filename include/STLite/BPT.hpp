@@ -1,7 +1,11 @@
+#pragma once
+
 #include <iostream>
 #include <fstream>
 #include <cstring>
 #include <string>
+
+#include "vector.hpp"
 
 constexpr int sizeofint = sizeof(int);
 constexpr int sizeofNode = 4096;
@@ -737,10 +741,10 @@ class BplusTree {
         delete memory;
     }
 
-    void find(const std::string &key) {
+    sjtu::vector<int> find(const std::string &key) {
+        sjtu::vector<int> ans;
         if (root_index == -1) {
-            std::cout << "null" << std::endl;
-            return;
+            return ans;
         }
 
         int index = root_index;
@@ -757,7 +761,6 @@ class BplusTree {
                         l = m + 1;
                 }
                 int pos = l;
-                bool first = true;
                 bool done = false;
                 leaf_Node *cur = node;
                 while (true) {
@@ -766,10 +769,7 @@ class BplusTree {
                             done = true;
                             break;
                         }
-                        if (!first)
-                            std::cout << ' ';
-                        std::cout << cur->values[pos];
-                        first = false;
+                        ans.push_back(cur->values[pos]);
                     }
                     if (done)
                         break;
@@ -780,10 +780,8 @@ class BplusTree {
                     cur = static_cast<leaf_Node*>(getNode(next_index));
                     pos = 0;
                 }
-                if (first) std::cout << "null";
-                std::cout << std::endl;
                 delete cur;
-                return;
+                return ans;
             } else {
                 internal_Node *node = static_cast<internal_Node*>(temp);
                 int l = 0, r = node->count, m;
