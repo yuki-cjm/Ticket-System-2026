@@ -1,16 +1,31 @@
 #include <iostream>
 #include <string>
+#include <fstream>
 
 #include "Program.hpp"
 #include "STLite/vector.hpp"
 #include "STLite/pair.hpp"
 
-Program::Program() {
-
+Program::Program() : total_filename("total") {
+    total_file.open(total_filename, std::ios::in | std::ios::out | std::ios::binary);
+    if (!total_file) {
+        total_file.open(total_filename, std::ios::out | std::ios::binary);
+        total_file.close();
+        total_file.open(total_filename, std::ios::in | std::ios::out | std::ios::binary);
+        accountmanager.changeCount(0);
+    } else {
+        total_file.seekg(0);
+        int account_count;
+        total_file.read(reinterpret_cast<char*>(&account_count), 4);
+        accountmanager.changeCount(account_count);
+    }
 }
 
 Program::~Program() {
-
+    total_file.seekp(0);
+    int account_count = accountmanager.getCount();
+    total_file.write(reinterpret_cast<char*>(&account_count), 4);
+    total_file.close();
 }
 
 void Program::execute(const std::string &line) {

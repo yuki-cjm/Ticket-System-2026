@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <fstream>
 
 #include "Parser.hpp"
 #include "AccountManager.hpp"
@@ -10,6 +11,8 @@
 
 class Program {
   private:
+    std::string total_filename;
+    std::fstream total_file;
     AccountManager accountmanager;
     TrainManager trainmanager;
     Parser parser;

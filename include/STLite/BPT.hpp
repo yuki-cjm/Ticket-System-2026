@@ -824,30 +824,3 @@ class BplusTree {
         delete temp;
     }
 };
-
-int main() {
-    std::ios::sync_with_stdio(false);
-    std::cin.tie(nullptr);
-
-    BplusTree<64> bpt("basic_information", "database");
-    int n;
-    std::cin >> n;
-    std::string instruction, index;
-    int value;
-
-    for (int i = 0; i < n; i++) {
-        std::cin >> instruction >> index;
-        if (instruction == "insert") {
-            std::cin >> value;
-            bpt.insert(index, value);
-        } else if (instruction == "delete") {
-            std::cin >> value;
-            bpt.remove(index, value);
-        } else if (instruction == "find") {
-            bpt.find(index);
-        }
-        // std::cout << "\n\n";
-        // bpt.print();
-    }
-    return 0;
-};
