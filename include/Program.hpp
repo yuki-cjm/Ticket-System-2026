@@ -9,6 +9,7 @@
 #include "STLite/vector.hpp"
 #include "STLite/pair.hpp"
 #include "STLite/map.hpp"
+#include "STLite/string.hpp"
 
 class Program {
   private:
@@ -17,7 +18,7 @@ class Program {
     AccountManager accountmanager;
     TrainManager trainmanager;
     Parser parser;
-    sjtu::map<std::string, int> loginrecorder;
+    sjtu::map<sjtu::string<20>, int> loginrecorder;
 
     bool programEnd_;
 
@@ -30,23 +31,23 @@ class Program {
     void programEnd();
     bool programRun();
 
-    void AddUser(const std::string &cur_username, const std::string &username, const std::string &password, const std::string &name, const std::string &mailAddr, int privilege);
-    void Login(const std::string &username, const std::string &password);
-    void Logout(const std::string &username);
-    void QueryProfile(const std::string &sur_username, const std::string &username);
-    void ModifyProfile(const std::string &cur_username, const std::string &username, const std::string &password, const std::string &name, const std::string &mailAddr, int privilege);
+    void AddUser(sjtu::string<20> &cur_username, sjtu::string<20> &username, sjtu::string<30> &password, sjtu::string<15> &name, sjtu::string<30> &mailAddr, int privilege);
+    void Login(const sjtu::string<20> &username, const sjtu::string<30> &password);
+    void Logout(const sjtu::string<20> &username);
+    void QueryProfile(const sjtu::string<20> &cur_username, const sjtu::string<20> &username);
+    void ModifyProfile(const sjtu::string<20> &cur_username, const sjtu::string<20> &username, const sjtu::string<30> &password, const sjtu::string<15> &name, const sjtu::string<30> &mailAddr, int privilege);
 
-    void AddTrain(const std::string &trainID, int stationNum, int seatNum, sjtu::vector<std::string> &stations, sjtu::vector<int> &prices, int startTime, sjtu::vector<int> &travelTimes, sjtu::vector<int> &stopoverTimes, sjtu::pair<int, int> saleDate, char type);
-    void DeleteTrain(const std::string &trainID);
-    void ReleaseTrain(const std::string &trainID);
+    void AddTrain(const sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::vector<sjtu::string<30>> &stations, sjtu::vector<int> &prices, int startTime, sjtu::vector<int> &travelTimes, sjtu::vector<int> &stopoverTimes, sjtu::pair<int, int> saleDate, char type);
+    void DeleteTrain(const sjtu::string<20> &trainID);
+    void ReleaseTrain(const sjtu::string<20> &trainID);
 
-    void QueryTrain(const std::string &trainID, int date);
-    void QueryTicket(const std::string &station1, const std::string station2, int date, bool query_type);
-    void QueryTransfer(const std::string &station1, const std::string station2, int date, bool query_type);
-    void BuyTicket(const std::string &username, const std::string &trainID, int date, int ticketnum, std::string &station1, std::string &station2, bool buy_type);
-    void QueryOrder(const std::string &username);
+    void QueryTrain(const sjtu::string<20> &trainID, int date);
+    void QueryTicket(const sjtu::string<30> &station1, const sjtu::string<30> &station2, int date, bool query_type);
+    void QueryTransfer(const sjtu::string<30> &station1, const sjtu::string<30> station2, int date, bool query_type);
+    void BuyTicket(const sjtu::string<20> &username, const sjtu::string<20> &trainID, int date, int ticketnum, sjtu::string<30> &station1, sjtu::string<30> &station2, bool buy_type);
+    void QueryOrder(const sjtu::string<20> &username);
 
-    void RefundTicket(const std::string &username, int ticketnum);
+    void RefundTicket(const sjtu::string<20> &username, int ticketnum);
 
     void Clean();
     void Exit();

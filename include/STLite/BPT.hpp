@@ -1,21 +1,26 @@
 #pragma once
 
-#include <iostream>
 #include <fstream>
 #include <cstring>
-#include <string>
 
 #include "vector.hpp"
+#include "string.hpp"
 
-constexpr int sizeofint = sizeof(int);
-constexpr int sizeofNode = 4096;
-constexpr int cache_size = 1024;
-
-template<int strlength>
+template<class T, class U>
 class BplusTree {
   private:
-    static constexpr int Isize = (sizeofNode - 1 - sizeofint * 3) / (strlength + 1 + sizeofint * 2);
-    static constexpr int Lsize = (sizeofNode - 1 - sizeofint * 3) / (strlength + 1 + sizeofint);
+    static constexpr int sizeofint = sizeof(int);
+    static constexpr int sizeofT = sizeof(T);
+    static constexpr int sizeofU = sizeof(U);
+
+    static constexpr int desired_fanout = 64;
+    static constexpr int raw_node = (1 + sizeofint * 3) + desired_fanout * (sizeofT + sizeofU + sizeofint) + sizeofint;
+    static constexpr int sizeofNode = raw_node <= 4096 ? 4096 : ((raw_node + 4095) / 4096) * 4096;
+    static constexpr int cache_size = 1024;
+
+    static constexpr int Isize = (sizeofNode - 1 - sizeofint * 3) / (sizeofT + sizeofU + sizeofint);
+    static constexpr int Lsize = (sizeofNode - 1 - sizeofint * 3) / (sizeofT + sizeofU);
+
     static constexpr int half_Isize = Isize >> 1;
     static constexpr int half_Lsize = Lsize >> 1;
   private:
@@ -26,14 +31,13 @@ class BplusTree {
 
         virtual void read(const char *buf) = 0;
         virtual void serialize(char *buf) = 0;
-        virtual void print() = 0;
         virtual ~Node() = default;
     };
 
     class internal_Node : public Node {
       public:
-        char keys[Isize + 1][strlength + 1];
-        int values[Isize + 1];
+        T keys[Isize + 1];
+        U values[Isize + 1];
         int nodes_index[Isize + 2];
 
         internal_Node() {
@@ -48,12 +52,10 @@ class BplusTree {
             std::memcpy(&this->count, p, sizeofint); p += sizeofint;
             std::memcpy(&this->index, p, sizeofint); p += sizeofint;
             if (this->count > 0) {
-                std::memcpy(keys, p, this->count * (strlength + 1));
-                p += this->count * (strlength + 1);
-                for (int i = 0; i < this->count; i++) 
-                    keys[i][strlength] = '\0';
-                std::memcpy(values, p, this->count * sizeofint);
-                p += this->count * sizeofint;
+                std::memcpy(keys, p, this->count * sizeofT);
+                p += this->count * sizeofT;
+                std::memcpy(values, p, this->count * sizeofU);
+                p += this->count * sizeofU;
             }
             std::memcpy(nodes_index, p, (this->count + 1) * sizeofint);
         }
@@ -63,38 +65,21 @@ class BplusTree {
             std::memcpy(p, &this->type, 1);   p += 1;
             std::memcpy(p, &this->count, sizeofint);  p += sizeofint;
             std::memcpy(p, &this->index, sizeofint);  p += sizeofint;
-            for (int i = 0; i < this->count; ++i) {
-                std::memcpy(p, keys[i], strlength + 1);
-                p += strlength + 1;
+            if (this->count > 0) {
+                std::memcpy(p, keys, this->count * sizeofT);
+                p += this->count * sizeofT;
+                std::memcpy(p, values, this->count * sizeofU);
+                p += this->count * sizeofU;
             }
-            for (int i = 0; i < this->count; i++) {
-                std::memcpy(p, &values[i], sizeofint);
-                p += sizeofint;
-            }
-            for (int i = 0; i <= this->count; i++) {
-                std::memcpy(p, &nodes_index[i], sizeofint);
-                p += sizeofint;
-            }
-        }
-
-        void print() override {
-            std::cout << "type : internal_Node\n";
-            std::cout << "index : " << this->index << '\n';
-            std::cout << "count : " << this->count << '\n';
-            std::cout << nodes_index[0] << ' ';
-            for (int i = 0; i < this->count; i++) {
-                std::cout << '(' << keys[i] << ", " << values[i] << ") " << nodes_index[i + 1] << ' ';
-            }
-            std::cout << '\n';
-            std::cout << std::endl;
+            std::memcpy(p, nodes_index, (this->count + 1) * sizeofint);
         }
     };
 
     class leaf_Node : public Node {
       public:
         int next_index;
-        char keys[Lsize][strlength + 1];
-        int values[Lsize];
+        T keys[Lsize];
+        U values[Lsize];
 
         leaf_Node() {
             this->type = true;
@@ -108,12 +93,11 @@ class BplusTree {
             std::memcpy(&this->count, p, sizeofint); p += sizeofint;
             std::memcpy(&this->index, p, sizeofint); p += sizeofint;
             std::memcpy(&next_index, p, sizeofint); p += sizeofint;
-            for (int i = 0; i < this->count; i++) {
-                std::memcpy(keys[i], p, strlength + 1);
-                keys[i][strlength] = '\0';
-                p += strlength + 1;
-                std::memcpy(&values[i], p, sizeofint);
-                p += sizeofint;
+            if (this->count > 0) {
+                std::memcpy(keys, p, this->count * sizeofT);
+                p += this->count * sizeofT;
+                std::memcpy(values, p, this->count * sizeofU);
+                p += this->count * sizeofU;
             }
         }
 
@@ -123,43 +107,24 @@ class BplusTree {
             std::memcpy(p, &this->count, sizeofint); p += sizeofint;
             std::memcpy(p, &this->index, sizeofint); p += sizeofint;
             std::memcpy(p, &next_index, sizeofint); p += sizeofint;
-            for (int i = 0; i < this->count; i++) {
-                std::memcpy(p, keys[i], strlength + 1);
-                p += strlength + 1;
-                std::memcpy(p, &values[i], sizeofint); 
-                p += sizeofint;
+            if (this->count > 0) {
+                std::memcpy(p, keys, this->count * sizeofT);
+                p += this->count * sizeofT;
+                std::memcpy(p, values, this->count * sizeofU);
+                p += this->count * sizeofU;
             }
-        }
-
-        void print() override {
-            std::cout << "type : leaf_Node\n";
-            std::cout << "index : " << this->index << '\n';
-            std::cout << "next_index : " << next_index << '\n';
-            std::cout << "count : " << this->count << '\n';
-            for (int i = 0; i < this->count; i++) {
-                std::cout << '(' << keys[i] << ", " << values[i] << ")  ";
-            }
-            std::cout << '\n';
-            std::cout << std::endl;
         }
     };
 
 
-    static int keycmp(const char a[strlength + 1], const std::string &b) {
-        return std::strncmp(a, b.c_str(), strlength + 1);
+    static int keycmp(const T &a, const T &b) {
+        if (a < b) return -1;
+        if (a == b) return 0;
+        return 1;
     }
 
-    static int keycmp(const char a[strlength + 1], const char b[strlength + 1]) {
-        return std::strncmp(a, b, strlength + 1);
-    }
-
-    static void set_key(char dest[strlength + 1], const std::string &src) {
-        std::strncpy(dest, src.c_str(), strlength);
-        dest[strlength] = '\0';
-    }
-
-    static void set_key(char dest[strlength + 1], const char src[strlength + 1]) {
-        std::memcpy(dest, src, strlength + 1);
+    static void set_key(T &dest, const T &src) {
+        dest = src;
     }
 
 
@@ -217,7 +182,9 @@ class BplusTree {
     struct Cache {
         int node_index = -1;
         char buf[sizeofNode];
-    } cache[cache_size];
+    };
+    Cache *cache;  // 缓存数组在堆上分配，规模为 cache_size
+
 
     // 返回一个新分配的 node，所有权归调用者，调用者负责 delete
     Node* getNode(int index) {
@@ -260,7 +227,7 @@ class BplusTree {
     }
 
 
-    std::pair<Memory*, bool> search(const std::string &key, int value) { // (a, b) -> b
+    std::pair<Memory*, bool> search(const T &key, const U &value) { // (a, b) -> b
         if (root_index == -1) {
             return {nullptr, false};
         }
@@ -275,9 +242,9 @@ class BplusTree {
                 while (l != r) {
                     m = (l + r) >> 1;
                     int cmp = keycmp(node->keys[m], key);
-                    if (cmp > 0 || cmp == 0 && node->values[m] > value)
+                    if (cmp > 0 || (cmp == 0 && node->values[m] > value))
                         r = m;
-                    else if (cmp < 0 || cmp == 0 && node->values[m] < value)
+                    else if (cmp < 0 || (cmp == 0 && node->values[m] < value))
                         l = m + 1;
                     else {
                         memory = new Memory(last, node, m);
@@ -292,7 +259,7 @@ class BplusTree {
                 while (l != r) {
                     m = (l + r) >> 1;
                     int cmp = keycmp(node->keys[m], key);
-                    if (cmp > 0 || cmp == 0 && node->values[m] > value)
+                    if (cmp > 0 || (cmp == 0 && node->values[m] > value))
                         r = m;
                     else
                         l = m + 1;
@@ -305,7 +272,7 @@ class BplusTree {
     }
   
     // 向内部节点插入key & value
-    void insert_internal(Memory *memory, const char key[strlength + 1], int value, int child_index) {
+    void insert_internal(Memory *memory, const T &key, const U &value, int child_index) {
         internal_Node *node = static_cast<internal_Node*>(memory->node);
         int node_index = node->index;
 
@@ -320,8 +287,8 @@ class BplusTree {
         }
         int pos = l;
 
-        std::memmove(node->keys[pos + 1], node->keys[pos], (node->count - pos) * (strlength + 1));
-        std::memmove(node->values + pos + 1, node->values + pos, (node->count - pos) * sizeofint);
+        std::memmove(node->keys + pos + 1, node->keys + pos, (node->count - pos) * sizeofT);
+        std::memmove(node->values + pos + 1, node->values + pos, (node->count - pos) * sizeofU);
         set_key(node->keys[pos], key);
         node->values[pos] = value;
         
@@ -336,8 +303,8 @@ class BplusTree {
             new_node->index = EmptyNodeIndex();
             new_node->count = Isize - half_Isize;
             node->count = half_Isize;
-            std::memcpy(new_node->keys, node->keys[half_Isize + 1], new_node->count * (strlength + 1));
-            std::memcpy(new_node->values, node->values + half_Isize + 1, new_node->count * sizeofint);
+            std::memcpy(new_node->keys, node->keys + half_Isize + 1, new_node->count * sizeofT);
+            std::memcpy(new_node->values, node->values + half_Isize + 1, new_node->count * sizeofU);
             std::memcpy(new_node->nodes_index, node->nodes_index + half_Isize + 1, (new_node->count + 1) * sizeofint);
 
             if (node->index == root_index) {
@@ -364,8 +331,8 @@ class BplusTree {
     }
 
     void fatherRemove(internal_Node *node, int data_index, int node_index) {
-        std::memmove(node->keys[data_index], node->keys[data_index + 1], (node->count - 1 - data_index) * (strlength + 1));
-        std::memmove(node->values + data_index, node->values + data_index + 1, (node->count - 1 - data_index) * sizeofint);
+        std::memmove(node->keys + data_index, node->keys + data_index + 1, (node->count - 1 - data_index) * sizeofT);
+        std::memmove(node->values + data_index, node->values + data_index + 1, (node->count - 1 - data_index) * sizeofU);
         std::memmove(node->nodes_index + node_index, node->nodes_index + node_index + 1, (node->count - node_index) * sizeofint);
         node->count--;
     }
@@ -393,8 +360,8 @@ class BplusTree {
             left_index = father->nodes_index[index - 1];
             left = static_cast<internal_Node*>(getNode(left_index));
             if (left->count > half_Isize) {
-                std::memmove(node->keys[1], node->keys[0], node->count * (strlength + 1));
-                std::memmove(node->values + 1, node->values, node->count * sizeofint);
+                std::memmove(node->keys + 1, node->keys, node->count * sizeofT);
+                std::memmove(node->values + 1, node->values, node->count * sizeofU);
                 std::memmove(node->nodes_index + 1, node->nodes_index, (node->count + 1) * sizeofint);
                 set_key(node->keys[0], father->keys[index - 1]);
                 node->values[0] = father->values[index - 1];
@@ -421,8 +388,8 @@ class BplusTree {
                 node->nodes_index[node->count + 1] = right->nodes_index[0];
                 set_key(father->keys[index], right->keys[0]);
                 father->values[index] = right->values[0];
-                std::memmove(right->keys[0], right->keys[1], (right->count - 1) * (strlength + 1));
-                std::memmove(right->values, right->values + 1, (right->count - 1) * sizeofint);
+                std::memmove(right->keys, right->keys + 1, (right->count - 1) * sizeofT);
+                std::memmove(right->values, right->values + 1, (right->count - 1) * sizeofU);
                 std::memmove(right->nodes_index, right->nodes_index + 1, right->count * sizeofint);
                 node->count++;
                 right->count--;
@@ -439,8 +406,8 @@ class BplusTree {
             set_key(left->keys[left->count], father->keys[index - 1]);
             left->values[left->count] = father->values[index - 1];
             left->count++;
-            std::memcpy(left->keys + left->count, node->keys, node->count * (strlength + 1));
-            std::memcpy(left->values + left->count, node->values, node->count * sizeofint);
+            std::memcpy(left->keys + left->count, node->keys, node->count * sizeofT);
+            std::memcpy(left->values + left->count, node->values, node->count * sizeofU);
             std::memcpy(left->nodes_index + left->count, node->nodes_index, (node->count + 1) * sizeofint);
             left->count += node->count;
 
@@ -460,8 +427,8 @@ class BplusTree {
             set_key(node->keys[node->count], father->keys[0]);
             node->values[node->count] = father->values[0];
             node->count++;
-            std::memcpy(node->keys + node->count, right->keys, right->count * (strlength + 1));
-            std::memcpy(node->values + node->count, right->values, right->count * sizeofint);
+            std::memcpy(node->keys + node->count, right->keys, right->count * sizeofT);
+            std::memcpy(node->values + node->count, right->values, right->count * sizeofU);
             std::memcpy(node->nodes_index + node->count, right->nodes_index, (right->count + 1) * sizeofint);
             node->count += right->count;
             writeNode(node);
@@ -482,7 +449,9 @@ class BplusTree {
 
   public:
     BplusTree (const std::string &basic_filename_, const std::string &data_filename_) : basic_filename(basic_filename_), data_filename(data_filename_) {
+        cache = new Cache[cache_size];
         file.open(basic_filename, std::ios::in | std::ios::out | std::ios::binary);
+
         if (!file) {
             file.open(basic_filename, std::ios::out | std::ios::binary);
             file.close();
@@ -551,9 +520,11 @@ class BplusTree {
             delete temp;
         }
         file.close();
+        delete[] cache;
     }
 
-    void insert(const std::string &key, int value) {
+
+    void insert(const T &key, const U &value) {
         if (root_index == -1) {
             leaf_Node *root = new leaf_Node();
             root->count = 1;
@@ -579,8 +550,8 @@ class BplusTree {
         int node_index = node->index;
 
         if (node->count > insert_pos) {
-            std::memmove(node->keys[insert_pos + 1], node->keys[insert_pos], (node->count - insert_pos) * (strlength + 1));
-            std::memmove(node->values + insert_pos + 1, node->values + insert_pos, (node->count - insert_pos) * sizeofint);
+            std::memmove(node->keys + insert_pos + 1, node->keys + insert_pos, (node->count - insert_pos) * sizeofT);
+            std::memmove(node->values + insert_pos + 1, node->values + insert_pos, (node->count - insert_pos) * sizeofU);
         }
 
         set_key(node->keys[insert_pos], key);
@@ -588,8 +559,8 @@ class BplusTree {
         node->count++;
         if (node->count == Lsize) {
             leaf_Node *new_node = new leaf_Node();
-            std::memcpy(new_node->keys, node->keys[half_Lsize], (Lsize - half_Lsize) * (strlength + 1));
-            std::memcpy(new_node->values, node->values + half_Lsize, (Lsize - half_Lsize) * sizeofint);
+            std::memcpy(new_node->keys, node->keys + half_Lsize, (Lsize - half_Lsize) * sizeofT);
+            std::memcpy(new_node->values, node->values + half_Lsize, (Lsize - half_Lsize) * sizeofU);
             new_node->count = Lsize - half_Lsize;
             node->count = half_Lsize;
             new_node->index = EmptyNodeIndex();
@@ -619,7 +590,7 @@ class BplusTree {
         delete memory;
     }
 
-    void remove(const std::string &key, int value) {
+    void remove(const T &key, const U &value) {
         if (root_index == -1)
             return;
         
@@ -634,8 +605,8 @@ class BplusTree {
         int erase_pos = memory->index;
         
         if (node->count - 1 > erase_pos) {
-            std::memmove(node->keys[erase_pos], node->keys[erase_pos + 1], (node->count - 1 - erase_pos) * (strlength + 1));
-            std::memmove(node->values + erase_pos, node->values + erase_pos + 1, (node->count - 1 - erase_pos) * sizeofint);
+            std::memmove(node->keys + erase_pos, node->keys + erase_pos + 1, (node->count - 1 - erase_pos) * sizeofT);
+            std::memmove(node->values + erase_pos, node->values + erase_pos + 1, (node->count - 1 - erase_pos) * sizeofU);
         }
         node->count--;
         writeNode(node);
@@ -650,8 +621,8 @@ class BplusTree {
                 left = static_cast<leaf_Node*>(getNode(left_index));
                 if (left->count > half_Lsize) {
                     // 向左借一个
-                    std::memmove(node->keys[1], node->keys[0], node->count * (strlength + 1));
-                    std::memmove(node->values + 1, node->values, node->count * sizeofint);
+                    std::memmove(node->keys + 1, node->keys, node->count * sizeofT);
+                    std::memmove(node->values + 1, node->values, node->count * sizeofU);
                     left->count--;
                     node->count++;
                     set_key(node->keys[0], left->keys[left->count]);
@@ -677,8 +648,8 @@ class BplusTree {
                     // 向右借一个
                     set_key(node->keys[node->count], right->keys[0]);
                     node->values[node->count] = right->values[0];
-                    std::memmove(right->keys[0], right->keys[1], (right->count - 1) * (strlength + 1));
-                    std::memmove(right->values, right->values + 1, (right->count - 1) * sizeofint);
+                    std::memmove(right->keys, right->keys + 1, (right->count - 1) * sizeofT);
+                    std::memmove(right->values, right->values + 1, (right->count - 1) * sizeofU);
                     node->count++;
                     right->count--;
 
@@ -696,8 +667,8 @@ class BplusTree {
             }
             // 合并
             if (index > 0) { // 向左合并
-                std::memcpy(left->keys + left->count, node->keys, node->count * (strlength + 1));
-                std::memcpy(left->values + left->count, node->values, node->count * sizeofint);
+                std::memcpy(left->keys + left->count, node->keys, node->count * sizeofT);
+                std::memcpy(left->values + left->count, node->values, node->count * sizeofU);
                 left->count += node->count;
                 left->next_index = node->next_index;
 
@@ -714,8 +685,8 @@ class BplusTree {
                     remove_internal(memory->father);
                 }
             } else { // 向右合并
-                std::memcpy(node->keys + node->count, right->keys, right->count * (strlength + 1));
-                std::memcpy(node->values + node->count, right->values, right->count * sizeofint);
+                std::memcpy(node->keys + node->count, right->keys, right->count * sizeofT);
+                std::memcpy(node->values + node->count, right->values, right->count * sizeofU);
                 node->count += right->count;
                 node->next_index = right->next_index;
 
@@ -741,8 +712,8 @@ class BplusTree {
         delete memory;
     }
 
-    sjtu::vector<int> find(const std::string &key) {
-        sjtu::vector<int> ans;
+    sjtu::vector<U> find(const T &key) {
+        sjtu::vector<U> ans;
         if (root_index == -1) {
             return ans;
         }
@@ -797,28 +768,5 @@ class BplusTree {
                 index = next_index;
             }
         }
-    }
-
-    void print(int index = -2) {
-        if (index == -2) {
-            index = root_index;
-        }
-        if (index == -1) {
-            std::cout << "Empty!!!\n";
-            return;
-        }
-
-        Node *temp = getNode(index);
-        if (temp->type) {
-            leaf_Node *node = static_cast<leaf_Node*>(temp);
-            node->print();
-        } else {
-            internal_Node *node = static_cast<internal_Node*>(temp);
-            node->print();
-            for (int i = 0; i <= node->count; i++) {
-                print(node->nodes_index[i]);
-            }
-        }
-        delete temp;
     }
 };
