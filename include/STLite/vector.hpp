@@ -247,10 +247,13 @@ class vector
         data_ = static_cast<T*>(operator new[](capacity_ * sizeof(T)));
     }
 
-    vector(int size) {
-        size_ =  0;
+    vector(int size, T &data) {
+        size_ = size;
         capacity_ = size;
         data_ = static_cast<T*>(operator new[](capacity_ * sizeof(T)));
+        for (int i = 0; i < size_; i++) {
+            new (data_ + i) T(data);
+        }
     }
 
 	vector(const vector &other)

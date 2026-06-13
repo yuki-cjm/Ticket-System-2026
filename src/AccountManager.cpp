@@ -7,7 +7,10 @@
 #include "STLite/BPT.hpp"
 #include "STLite/string.hpp"
 
-struct Account;
+constexpr int sizeofpassword = sizeof(sjtu::string<30>);
+constexpr int sizeofname = sizeof(sjtu::string<15>);
+constexpr int sizeofmailAddr = sizeof(sjtu::string<30>);
+constexpr int sizeofint = sizeof(int);
 
 AccountManager::AccountManager() : account_filename("accountdata"), account_bpt("accountbasic", "accountindex") {
     account_file.open(account_filename, std::ios::in | std::ios::out | std::ios::binary);
@@ -43,26 +46,26 @@ void AccountManager::addAccount(sjtu::string<20> &username, sjtu::string<30> &pa
     account_count++;
     account_bpt.insert(username, index);
     account_file.seekp(account_size * index);
-    account_file.write(reinterpret_cast<char*>(&password), sizeof(password));
-    account_file.write(reinterpret_cast<char*>(&name), sizeof(name));
-    account_file.write(reinterpret_cast<char*>(&mailAddr), sizeof(mailAddr));
-    account_file.write(reinterpret_cast<char*>(&privilege), 4);
+    account_file.write(reinterpret_cast<char*>(&password), sizeofpassword);
+    account_file.write(reinterpret_cast<char*>(&name), sizeofname);
+    account_file.write(reinterpret_cast<char*>(&mailAddr), sizeofmailAddr);
+    account_file.write(reinterpret_cast<char*>(&privilege), sizeofint);
 }
 
 Account AccountManager::getAccount(int index) {
     account_file.seekg(account_size * index);
     Account account;
-    account_file.read(reinterpret_cast<char*>(&account.password), sizeof(account.password));
-    account_file.read(reinterpret_cast<char*>(&account.name), sizeof(account.name));
-    account_file.read(reinterpret_cast<char*>(&account.mailAddr), sizeof(account.mailAddr));
-    account_file.read(reinterpret_cast<char*>(&account.privilege), 4);
+    account_file.read(reinterpret_cast<char*>(&account.password), sizeofpassword);
+    account_file.read(reinterpret_cast<char*>(&account.name), sizeofname);
+    account_file.read(reinterpret_cast<char*>(&account.mailAddr), sizeofmailAddr);
+    account_file.read(reinterpret_cast<char*>(&account.privilege), sizeofint);
     return account;
 }
 
 void AccountManager::writeAccount(int index, Account &account) {
     account_file.seekp(account_size * index);
-    account_file.write(reinterpret_cast<char*>(&account.password), sizeof(account.password));
-    account_file.write(reinterpret_cast<char*>(&account.name), sizeof(account.name));
-    account_file.write(reinterpret_cast<char*>(&account.mailAddr), sizeof(account.mailAddr));
-    account_file.write(reinterpret_cast<char*>(&account.privilege), 4);
+    account_file.write(reinterpret_cast<char*>(&account.password), sizeofpassword);
+    account_file.write(reinterpret_cast<char*>(&account.name), sizeofname);
+    account_file.write(reinterpret_cast<char*>(&account.mailAddr), sizeofmailAddr);
+    account_file.write(reinterpret_cast<char*>(&account.privilege), sizeofint);
 }

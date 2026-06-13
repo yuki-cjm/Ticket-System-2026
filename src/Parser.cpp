@@ -1,12 +1,13 @@
 #include <iostream>
 #include <string>
 
-#include "STLite/vector.hpp"
-#include "STLite/string.hpp"
 #include "Parser.hpp"
 #include "Program.hpp"
+#include "STLite/vector.hpp"
+#include "STLite/string.hpp"
 
-class Program;
+constexpr int daytime = 1440;
+constexpr int hourtime = 60;
 
 enum wordType {
     DEFAULT,
@@ -117,9 +118,9 @@ int getStartTime(int &pointer, const std::string &line, bool &error) {
         error = true;
         return -1;
     }
-    int ans = ((line[pointer] - '0') * 10 + (line[pointer + 1] - '0')) * 60 + ((line[pointer + 3] - '0') * 10 + (line[pointer + 4] - '0'));
+    int ans = ((line[pointer] - '0') * 10 + (line[pointer + 1] - '0')) * hourtime + ((line[pointer + 3] - '0') * 10 + (line[pointer + 4] - '0'));
     pointer += 5;
-    if (ans >= 1440) {
+    if (ans >= daytime) {
         error = true;
         return -1;
     } else {

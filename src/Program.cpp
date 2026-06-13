@@ -10,8 +10,23 @@
 #include "STLite/map.hpp"
 #include "STLite/string.hpp"
 
-struct Account;
-struct Train;
+constexpr int sizeofint = sizeof(int);
+constexpr int daytime = 1440;
+constexpr int hourtime = 60;
+
+void printTime(int time) {
+    int day = time / daytime, month = 6;
+    time %= daytime;
+    if (day > 30) {
+        day -= 30;
+        month++;
+    }
+    if (day > 31) {
+        day -= 31;
+        month++;
+    }
+    printf("%02d-%02d %02d:%02d", month, day, time / hourtime, time % hourtime);
+}
 
 Program::Program() : total_filename("total") {
     total_file.open(total_filename, std::ios::in | std::ios::out | std::ios::binary);
@@ -20,19 +35,30 @@ Program::Program() : total_filename("total") {
         total_file.close();
         total_file.open(total_filename, std::ios::in | std::ios::out | std::ios::binary);
         accountmanager.changeCount(0);
+        trainmanager.changeTrainCount(0);
+        trainmanager.changeStationCount(0);
     } else {
         total_file.seekg(0);
-        int account_count;
-        total_file.read(reinterpret_cast<char*>(&account_count), 4);
-        accountmanager.changeCount(account_count);
+        int count;
+        total_file.read(reinterpret_cast<char*>(&count), sizeofint);
+        accountmanager.changeCount(count);
+        total_file.read(reinterpret_cast<char*>(&count), sizeofint);
+        trainmanager.changeTrainCount(count);
+        total_file.read(reinterpret_cast<char*>(&count), sizeofint);
+        trainmanager.changeStationCount(count);
     }
     loginrecorder.clear();
 }
 
 Program::~Program() {
     total_file.seekp(0);
-    int account_count = accountmanager.getCount();
-    total_file.write(reinterpret_cast<char*>(&account_count), 4);
+    int count;
+    count = accountmanager.getCount();
+    total_file.write(reinterpret_cast<char*>(&count), sizeofint);
+    count = trainmanager.getTrainCount();
+    total_file.write(reinterpret_cast<char*>(&count), sizeofint);
+    count = trainmanager.getStationCount();
+    total_file.write(reinterpret_cast<char*>(&count), sizeofint);
     total_file.close();
 }
 
@@ -211,35 +237,87 @@ void Program::AddTrain(const sjtu::string<20> &trainID, int stationNum, int seat
     // std::cout << '\n';
     // std::cout << "saleDate: " << saleDate.first << ' ' << saleDate.second << '\n';
     // std::cout << "type: " << type << std::endl;
-    if (trainmamanger.getTrainIndex(trainID) != -1) {
+    if (!trainmanager.getTrainIndex(trainID).empty()) {
         std::cout << "-1" << std::endl;
         return;
     }
     trainmanager.addTrain(trainID, stationNum, seatNum, stations, prices, startTime, travelTimes, stopoverTimes, saleDate, type);
+    std::cout << "0" << std::endl;
 }
 
 void Program::DeleteTrain(const sjtu::string<20> &trainID) {
-    std::cout << "trainID: " << trainID << std::endl;
+    // std::cout << "trainID: " << trainID << std::endl;
+    sjtu::vector<int> indexs = trainmanager.getTrainIndex(trainID);
+    if (indexs.empty()) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    Train train = trainmanager.getTrain(indexs[0]);
+    if (train.state != 0) {
+        std::cout << "-1" << std::endl;
+    }
+    trainmanager.deleteTrain(indexs);
+    std::cout << "0" << std::endl;
 }
 
 void Program::ReleaseTrain(const sjtu::string<20> &trainID) {
-    std::cout << "trainID: " << trainID << std::endl;
+    // std::cout << "trainID: " << trainID << std::endl;
+    sjtu::vector<int> indexs = trainmanager.getTrainIndex(trainID);
+    if (indexs.empty()) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    Train train = trainmanager.getTrain(indexs[0]);
+    if (train.state != 0) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    trainmanager.releaseTrain(indexs);
+    std::cout << "0" << std::endl;
 }
 
 void Program::QueryTrain(const sjtu::string<20> &trainID, int date) {
-    std::cout << "trainID: " << trainID << '\n';
-    std::cout << "Date: " << date << std::endl;
+    // std::cout << "trainID: " << trainID << '\n';
+    // std::cout << "Date: " << date << std::endl;
+    sjtu::vector<int> indexs = trainmanager.getTrainIndex(trainID);
+    if (indexs.empty()) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    Train train = trainmanager.getTrain(indexs[0]);
+    int startdate = train.leavingTimes[0] / daytime;
+    int index = date - startdate;
+    if (index < 0 || index >= indexs.size() || train.state == 2) {
+        std::cout << "-1" << std::endl;
+        return;
+    }
+    train = trainmanager.getTrain(indexs[index]);
+    int last = train.stationNum - 1;
+    std::cout << trainID << ' ' << train.type << '\n';
+    std::cout << trainmanager.getStation(train.stations[0]) << ' ' << "xx-xx xx:xx -> ";
+    printTime(train.leavingTimes[0]);
+    std::cout << ' ' << train.sum_prices[0] << ' ' << train.seats[0] << '\n';
+    for (int i = 1; i < last; i++) {
+        std::cout << trainmanager.getStation(train.stations[i]) << ' ';
+        printTime(train.arrivingTimes[i]);
+        std::cout << " -> ";
+        printTime(train.leavingTimes[i]);
+        std::cout << ' ' << train.sum_prices[i] << ' ' << train.seats[i] << '\n';
+    }
+    std::cout << trainmanager.getStation(train.stations[last]) << ' ';
+    printTime(train.arrivingTimes[last]);
+    std::cout << " -> xx-xx xx:xx " << train.sum_prices[last] << " x" << std::endl;
 }
 
 void Program::QueryTicket(const sjtu::string<30> &station1, const sjtu::string<30> &station2, int date, bool query_type) {
-    std::cout << "station1: " << station1 << '\n';
-    std::cout << "station2: " << station2 << '\n';
-    std::cout << "date: " << date << '\n';
-    if (!query_type) {
-        std::cout << "time" << std::endl;
-    } else {
-        std::cout << "cost" << std::endl;
-    }
+    // std::cout << "station1: " << station1 << '\n';
+    // std::cout << "station2: " << station2 << '\n';
+    // std::cout << "date: " << date << '\n';
+    // if (!query_type) {
+    //     std::cout << "time" << std::endl;
+    // } else {
+    //     std::cout << "cost" << std::endl;
+    // }
 }
 
 void Program::QueryTransfer(const sjtu::string<30> &station1, const sjtu::string<30> station2, int date, bool query_type) {
