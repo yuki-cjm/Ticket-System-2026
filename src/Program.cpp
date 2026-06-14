@@ -120,24 +120,24 @@ void Program::AddUser(sjtu::string<20> &cur_username, sjtu::string <20>&username
 
     if (accountmanager.getAccountCount() == 0) {
         accountmanager.addAccount(username, password, name, mailAddr, 10);
-        std::cout << "0" << std::endl;
+        std::cout << "0\n";
         return;
     }
     if (loginrecorder.find(cur_username) == loginrecorder.end()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     int cur_privilege = loginrecorder[cur_username];
     if (privilege >= cur_privilege) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     if (accountmanager.getIndex(username) != -1) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     accountmanager.addAccount(username, password, name, mailAddr, privilege);
-    std::cout << "0" << std::endl;
+    std::cout << "0\n";
 }
 
 void Program::Login(const sjtu::string<20> &username, const sjtu::string<30> &password) {
@@ -145,31 +145,31 @@ void Program::Login(const sjtu::string<20> &username, const sjtu::string<30> &pa
     // std::cout << "password: " << password << std::endl;
     int index = accountmanager.getIndex(username);
     if (index == -1) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     if (loginrecorder.find(username) != loginrecorder.end()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     Account account = accountmanager.getAccount(index);
     if (account.password == password) {
         loginrecorder.insert(sjtu::pair(username, account.privilege));
-        std::cout << "0" << std::endl;
+        std::cout << "0\n";
         return;
     }
-    std::cout << "-1" << std::endl;
+    std::cout << "-1\n";
 }
 
 void Program::Logout(const sjtu::string<20> &username) {
     // std::cout << "username: " << username << std::endl;
     auto it = loginrecorder.find(username);
     if (it == loginrecorder.end()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     loginrecorder.erase(it);
-    std::cout << "0" << std::endl;
+    std::cout << "0\n";
 }
 
 void Program::QueryProfile(const sjtu::string<20> &cur_username, const sjtu::string<20> &username) {
@@ -177,20 +177,20 @@ void Program::QueryProfile(const sjtu::string<20> &cur_username, const sjtu::str
     // std::cout << "username: " << username << std::endl;
     auto it = loginrecorder.find(cur_username);
     if (it == loginrecorder.end()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     int index = accountmanager.getIndex(username);
     if (index == -1) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     Account account = accountmanager.getAccount(index);
     if (it->second < account.privilege || it->second == account.privilege && cur_username != username) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
-    std::cout << username << ' ' << account.name << ' ' << account.mailAddr << ' ' << account.privilege << std::endl;
+    std::cout << username << ' ' << account.name << ' ' << account.mailAddr << ' ' << account.privilege << '\n';
 }
 
 void Program::ModifyProfile(const sjtu::string<20> &cur_username, const sjtu::string<20> &username, const sjtu::string<30> &password, const sjtu::string<15> &name, const sjtu::string<30> &mailAddr, int privilege) {
@@ -210,21 +210,21 @@ void Program::ModifyProfile(const sjtu::string<20> &cur_username, const sjtu::st
     // }
     auto it = loginrecorder.find(cur_username);
     if (it == loginrecorder.end()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     if (privilege != -1 && privilege >= it->second) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     int index = accountmanager.getIndex(username);
     if (index == -1) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     Account account = accountmanager.getAccount(index);
     if (it->second < account.privilege || it->second == account.privilege && cur_username != username) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     if (!password.empty()) {
@@ -244,7 +244,7 @@ void Program::ModifyProfile(const sjtu::string<20> &cur_username, const sjtu::st
         }
     }
     accountmanager.writeAccount(index, account);
-    std::cout << username << ' ' << account.name << ' ' << account.mailAddr << ' ' << account.privilege << std::endl;
+    std::cout << username << ' ' << account.name << ' ' << account.mailAddr << ' ' << account.privilege << '\n';
 }
 
 void Program::AddTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::vector<sjtu::string<30>> &stations, sjtu::vector<int> &prices, int startTime, sjtu::vector<int> &travelTimes, sjtu::vector<int> &stopoverTimes, sjtu::pair<int, int> saleDate, char type) {
@@ -274,43 +274,43 @@ void Program::AddTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, s
     // std::cout << "saleDate: " << saleDate.first << ' ' << saleDate.second << '\n';
     // std::cout << "type: " << type << std::endl;
     if (!trainmanager.getTrainIndexs(trainID).empty()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     trainmanager.addTrain(trainID, stationNum, seatNum, stations, prices, startTime, travelTimes, stopoverTimes, saleDate, type);
-    std::cout << "0" << std::endl;
+    std::cout << "0\n";
 }
 
-void Program::DeleteTrain(const sjtu::string<20> &trainID) {
+void Program::DeleteTrain(sjtu::string<20> &trainID) {
     // std::cout << "trainID: " << trainID << std::endl;
     sjtu::vector<int> indexs = trainmanager.getTrainIndexs(trainID);
     if (indexs.empty()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     Train train = trainmanager.getTrain(indexs[0]);
     if (train.state != 0) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
-    trainmanager.deleteTrain(indexs);
-    std::cout << "0" << std::endl;
+    trainmanager.deleteTrain(trainID, indexs);
+    std::cout << "0\n";
 }
 
 void Program::ReleaseTrain(const sjtu::string<20> &trainID) {
     // std::cout << "trainID: " << trainID << std::endl;
     sjtu::vector<int> indexs = trainmanager.getTrainIndexs(trainID);
     if (indexs.empty()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     Train train = trainmanager.getTrain(indexs[0]);
     if (train.state != 0) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     trainmanager.releaseTrain(indexs);
-    std::cout << "0" << std::endl;
+    std::cout << "0\n";
 }
 
 void Program::QueryTrain(const sjtu::string<20> &trainID, int date) {
@@ -318,14 +318,14 @@ void Program::QueryTrain(const sjtu::string<20> &trainID, int date) {
     // std::cout << "Date: " << date << std::endl;
     sjtu::vector<int> indexs = trainmanager.getTrainIndexs(trainID);
     if (indexs.empty()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     Train train = trainmanager.getTrain(indexs[0]);
     int startdate = train.leavingTimes[0] / daytime;
     int index = date - startdate;
     if (index < 0 || index >= indexs.size() || train.state == 2) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     train = trainmanager.getTrain(indexs[index]);
@@ -343,7 +343,7 @@ void Program::QueryTrain(const sjtu::string<20> &trainID, int date) {
     }
     std::cout << trainmanager.getStation(train.stations[last]) << ' ';
     printTime(train.arrivingTimes[last]);
-    std::cout << " -> xx-xx xx:xx " << train.sum_prices[last] << " x" << std::endl;
+    std::cout << " -> xx-xx xx:xx " << train.sum_prices[last] << " x\n";
 }
 
 void Program::QueryTicket(sjtu::string<30> &station1, sjtu::string<30> &station2, int date, bool query_type) {
@@ -397,7 +397,7 @@ void Program::QueryTicket(sjtu::string<30> &station1, sjtu::string<30> &station2
         std::cout << " -> ";
         std::cout << station2 << ' ';
         printTime(ticket.arrivingtime);
-        std::cout << ' ' << ticket.price << ' ' << ticket.seat << std::endl;
+        std::cout << ' ' << ticket.price << ' ' << ticket.seat << '\n';
     }
 }
 
@@ -483,9 +483,9 @@ void Program::QueryTransfer(sjtu::string<30> &station1, sjtu::string<30> station
         printTime(transfer.leavingtime2);
         std::cout << " -> " << station2 << ' ';
         printTime(transfer.arrivingtime2);
-        std::cout << ' ' << transfer.price2 << ' ' << transfer.seat2 << std::endl;
+        std::cout << ' ' << transfer.price2 << ' ' << transfer.seat2 << '\n';
     } else {
-        std::cout << "0" << std::endl;
+        std::cout << "0\n";
     }
 }
 
@@ -502,17 +502,17 @@ void Program::BuyTicket(const sjtu::string<20> &username, const sjtu::string<20>
     //     std::cout << "true" << std::endl;
     // }
     if (loginrecorder.find(username) == loginrecorder.end()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     sjtu::vector<int> trainindexs = trainmanager.getTrainIndexs(trainID);
     if (trainindexs.empty()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     Train train = trainmanager.getTrain(trainindexs[0]);
-    if (train.state != 1) {
-        std::cout << "-1" << std::endl;
+    if (train.state != 1 || ticketnum > train.seatNum) {
+        std::cout << "-1\n";
         return;
     }
     int fromstation_index = trainmanager.getStationIndex(station1);
@@ -521,12 +521,12 @@ void Program::BuyTicket(const sjtu::string<20> &username, const sjtu::string<20>
     for (fromstation = 0; fromstation < train.stationNum && train.stations[fromstation] != fromstation_index; fromstation++) {}
     for (tostation = 0; tostation < train.stationNum && train.stations[tostation] != tostation_index; tostation++) {}
     if (fromstation == train.stationNum || tostation == train.stationNum || fromstation >= tostation) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     int dateoffset = date - train.leavingTimes[fromstation] / daytime;
     if (dateoffset < 0 || dateoffset >= trainindexs.size()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     int trainindex = trainindexs[dateoffset];
@@ -540,11 +540,11 @@ void Program::BuyTicket(const sjtu::string<20> &username, const sjtu::string<20>
     int price = train.sum_prices[tostation] - train.sum_prices[fromstation];
     if (available_seat < ticketnum) {
         if (!buy_type) {
-            std::cout << "-1" << std::endl;
+            std::cout << "-1\n";
         } else {
             pendingorders.push_back(ordermanager.getOrderCount());
             ordermanager.addPendingOrder(username, trainindex, fromstation, tostation, fromstation_index, tostation_index, train.leavingTimes[fromstation], train.arrivingTimes[tostation], price, ticketnum);
-            std::cout << "queue" << std::endl;
+            std::cout << "queue\n";
         }
         return;
     }
@@ -553,18 +553,18 @@ void Program::BuyTicket(const sjtu::string<20> &username, const sjtu::string<20>
         train.seats[station] -= ticketnum;
     }
     trainmanager.writeTrain(trainindex, train);
-    std::cout << (long long)(price) * ticketnum << std::endl;
+    std::cout << (long long)(price) * ticketnum << '\n';
 }
 
 void Program::QueryOrder(const sjtu::string<20> &username) {
     // std::cout << "username: " << username << std::endl;
     if (loginrecorder.find(username) == loginrecorder.end()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     sjtu::vector<int> orderindexs = ordermanager.getOrderIndexs(username);
     if (orderindexs.empty()) {
-        std::cout << "0" << std::endl;
+        std::cout << "0\n";
         return;
     }
     Order order;
@@ -584,7 +584,7 @@ void Program::QueryOrder(const sjtu::string<20> &username) {
         printTime(order.leavingtime);
         std::cout << " -> " << trainmanager.getStation(order.tostation_index) << ' ';
         printTime(order.arrivingtime);
-        std::cout << ' ' << order.price << ' ' << order.num << std::endl; 
+        std::cout << ' ' << order.price << ' ' << order.num << '\n'; 
     } while(it != orderindexs.begin());
 }
 
@@ -592,12 +592,12 @@ void Program::RefundTicket(const sjtu::string<20> &username, int ticketnum) {
     // std::cout << "username: " << username << '\n';
     // std::cout << "ticketnum: " << ticketnum << std::endl;
     if (loginrecorder.find(username) == loginrecorder.end()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     sjtu::vector<int> orderindexs = ordermanager.getOrderIndexs(username);
     if (orderindexs.size() < ticketnum) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     Order order;
@@ -643,11 +643,12 @@ void Program::RefundTicket(const sjtu::string<20> &username, int ticketnum) {
             }
         }
     } else if (order.state == 2) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
+        return;
     }
     order.state = 2;
     ordermanager.writeOrder(*it, order);
-    std::cout << "0" << std::endl;
+    std::cout << "0\n";
 }
 
 void Program::Clean() {
@@ -660,10 +661,10 @@ void Program::Clean() {
     ordermanager.clean();
     loginrecorder.clear();
     pendingorders.clear();
-    std::cout << "0" << std::endl;
+    std::cout << "0\n";
 }
 
 void Program::Exit() {
     programEnd_ = true;
-    std::cout << "bye" << std::endl;
+    std::cout << "bye\n";
 }

@@ -354,7 +354,7 @@ void Parser::parseAddUser(int &pointer, const std::string &line, Program *progra
         }
     }
     if (error || !getc || !getu || !getp || !getn || !getm || !getg) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
     } else {
         program->AddUser(cur_username, username, password, name, mailAddr, privilege);
     }
@@ -394,7 +394,7 @@ void Parser::parseLogin(int &pointer, const std::string &line, Program *program)
         }
     }
     if (error || !getu || !getp) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
     } else {
         program->Login(username, password);
     }
@@ -407,13 +407,13 @@ void Parser::parseLogout(int &pointer, const std::string &line, Program *program
     bool error = false;
     key = getword(pointer, line);
     if (key.length() != 2 || key[0] != '-') {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     username = getword<20>(pointer, line, error, wordType::USERNAME);
     key = getword(pointer, line);
     if (error || username.empty() || !key.empty()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     program->Logout(username);
@@ -452,7 +452,7 @@ void Parser::parseQueryProfile(int &pointer, const std::string &line, Program *p
         }
     }
     if (error || !getc || !getu) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     program->QueryProfile(cur_username, username);
@@ -532,7 +532,7 @@ void Parser::parseModifyProfile(int &pointer, const std::string &line, Program *
         }
     }
     if (error || !getc || !getu) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
     } else {
         program->ModifyProfile(cur_username, username, password, name, mailAddr, privilege);
     }
@@ -651,7 +651,7 @@ void Parser::parseAddTrain(int &pointer, const std::string &line, Program *progr
         }
     }
     if (error || !geti || !getn || !getm || !gets || !getp || !getx || !gett || !geto || !getd || !gety || prices.size() != stationNum - 1 || travelTimes.size() != stationNum - 1 || stopoverTimes.size() != stationNum - 2) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     program->AddTrain(trainID, stationNum, seatNum, stations, prices, startTime, travelTimes, stopoverTimes, saleDate, type);
@@ -664,13 +664,13 @@ void Parser::parseDeleteTrain(int &pointer, const std::string &line, Program *pr
     bool error = false;
     key = getword(pointer, line);
     if (key.length() != 2 && key != "-i") {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     trainID = getword<20>(pointer, line, error, TRAINID);
     key = getword(pointer, line);
     if (trainID.empty() || !key.empty() || error) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     program->DeleteTrain(trainID);
@@ -683,13 +683,13 @@ void Parser::parseReleaseTrain(int &pointer, const std::string &line, Program *p
     bool error = false;
     key = getword(pointer, line);
     if (key.length() != 2 && key != "-i") {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     trainID = getword<20>(pointer, line, error, TRAINID);
     key = getword(pointer, line);
     if (error || trainID.empty() || !key.empty()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     program->ReleaseTrain(trainID);
@@ -724,7 +724,7 @@ void Parser::parseQueryTrain(int &pointer, const std::string &line, Program *pro
         }
     }
     if (error || !geti || !getd) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     program->QueryTrain(trainID, date);
@@ -794,7 +794,7 @@ void Parser::parseQueryTicket(int &pointer, const std::string &line, Program *pr
         }
     }
     if (error || !gets || !gett || !getd) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     program->QueryTicket(station1, station2, date, query_type);
@@ -862,7 +862,7 @@ void Parser::parseQueryTransfer(int &pointer, const std::string &line, Program *
         }
     }
     if (error || !gets || !gett || !getd) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     program->QueryTransfer(station1, station2, date, query_type);
@@ -956,7 +956,7 @@ void Parser::parseBuyTicket(int &pointer, const std::string &line, Program *prog
         }
     }
     if (error || !getu || !geti || !getd || !getn || !getf || !gett) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     program->BuyTicket(username, trainID, date, ticketnum, station1, station2, buy_type);
@@ -972,12 +972,12 @@ void Parser::parseQueryOrder(int &pointer, const std::string &line, Program *pro
         username = getword<20>(pointer, line, error, USERNAME);
         key = getword(pointer, line);
         if (error || username.empty() || !key.empty()) {
-            std::cout << "-1" << std::endl;
+            std::cout << "-1\n";
             return;
         }
         program->QueryOrder(username);
     } else {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
     }
 }
 
@@ -1019,7 +1019,7 @@ void Parser::parseRefundTicket(int &pointer, const std::string &line, Program *p
         }
     }
     if (error || !getu) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     program->RefundTicket(username, ticketnum);
@@ -1029,7 +1029,7 @@ void Parser::parseClean(int &pointer, const std::string &line, Program *program)
     // std::cout << "parseClean" << std::endl;
     bool error = false;
     if (!getword(pointer, line).empty()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     program->Clean();
@@ -1039,7 +1039,7 @@ void Parser::parseExit(int &pointer, const std::string &line, Program *program) 
     // std::cout << "parseExit" << std::endl;
     bool error = false;
     if (!getword(pointer, line).empty()) {
-        std::cout << "-1" << std::endl;
+        std::cout << "-1\n";
         return;
     }
     program->Exit();

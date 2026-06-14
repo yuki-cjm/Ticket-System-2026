@@ -42,7 +42,7 @@ class Program {
     void ModifyProfile(const sjtu::string<20> &cur_username, const sjtu::string<20> &username, const sjtu::string<30> &password, const sjtu::string<15> &name, const sjtu::string<30> &mailAddr, int privilege);
 
     void AddTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::vector<sjtu::string<30>> &stations, sjtu::vector<int> &prices, int startTime, sjtu::vector<int> &travelTimes, sjtu::vector<int> &stopoverTimes, sjtu::pair<int, int> saleDate, char type);
-    void DeleteTrain(const sjtu::string<20> &trainID);
+    void DeleteTrain(sjtu::string<20> &trainID);
     void ReleaseTrain(const sjtu::string<20> &trainID);
 
     void QueryTrain(const sjtu::string<20> &trainID, int date);
