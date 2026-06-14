@@ -33,6 +33,12 @@ class pair {
         this->second = other.second;
         return *this;
     }
+
+    bool operator<(const pair &o) const { return first < o.first || first == o.first && second < o.second; }
+    bool operator>(const pair &o) const { return first > o.first || first == o.first && second > o.second; }
+    bool operator==(const pair &o) const { return first == o.first && first == o.first && second == o.second; }
+    bool operator<=(const pair &o) const { return first < o.first || first == o.first && second <= o.second; }
+    bool operator>=(const pair &o) const { return first > o.first || first == o.first && second >= o.second; }
 };
 
 }  // namespace sjtu

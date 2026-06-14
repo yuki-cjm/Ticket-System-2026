@@ -128,29 +128,21 @@ int getStartTime(int &pointer, const std::string &line, bool &error) {
     }
 }
 
+const int monthday[13] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+const int sumday[13] = {0, 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
+
 bool judgeDateCorrectness(int month, int day) {
-    if (month < 6 || month > 8) {
+    if (month < 1 || month > 12) {
         return false;
     }
-    if (day == 0) {
-        return false;
-    }
-    if (month == 6 && day > 30 || (month == 7 || month == 8) && day > 31) {
+    if (day < 1 || day > monthday[month]) {
         return false;
     }
     return true;
 }
 
 int culculateDate(int month, int day) {
-    int ans;
-    if (month == 6) {
-        ans = day;
-    } else if (month == 7) {
-        ans = 30 + day;
-    } else {
-        ans = 61 + day;
-    }
-    return ans;
+    return sumday[month] + day;
 }
 
 // saleDate
@@ -246,7 +238,7 @@ sjtu::string<strlength> getword(int &pointer, const std::string &line, bool &err
          }
         temp.push_back(c);
     }
-    if (type == NAME && (temp.length() % 3 != 0 || temp.length() <= 3 || temp.length() >= 15)) {
+    if (type == NAME && (temp.length() % 3 != 0 || temp.length() <= 3 || temp.length() > 15)) {
         error = true;
         return temp;
      }
@@ -636,6 +628,10 @@ void Parser::parseAddTrain(int &pointer, const std::string &line, Program *progr
                 }
                 getd = true;
                 saleDate = getSaleDate(pointer, line, error);
+                if (saleDate.first <=sumday[6] || saleDate.first > sumday[9] || saleDate.second <= sumday[6] || saleDate.second > sumday[9]) {
+                    error = true;
+                    break;
+                }
                 break;
             case 'y': {
                 if (gety) {
@@ -738,7 +734,7 @@ void Parser::parseQueryTicket(int &pointer, const std::string &line, Program *pr
     // std::cout << "parseQueryTicket" << std::endl;
     std::string key;
     sjtu::string<30> station1, station2;
-    bool query_type; // 0->time, 1->cost
+    bool query_type = false; // 0->time, 1->cost
     int date;
     bool gets, gett, getd, getp;
     gets = gett = getd = getp = false;
@@ -797,7 +793,7 @@ void Parser::parseQueryTicket(int &pointer, const std::string &line, Program *pr
             break;
         }
     }
-    if (error || !gets || !gett || !getd || !getp) {
+    if (error || !gets || !gett || !getd) {
         std::cout << "-1" << std::endl;
         return;
     }
@@ -805,10 +801,9 @@ void Parser::parseQueryTicket(int &pointer, const std::string &line, Program *pr
 }
 
 void Parser::parseQueryTransfer(int &pointer, const std::string &line, Program *program) {
-    // std::cout << "parseQueryTransfer" << std::endl;
     std::string key;
     sjtu::string<30> station1, station2;
-    bool query_type; // 0->time, 1->cost
+    bool query_type = false; // 0->time, 1->cost
     int date;
     bool gets, gett, getd, getp;
     gets = gett = getd = getp = false;
@@ -821,11 +816,11 @@ void Parser::parseQueryTransfer(int &pointer, const std::string &line, Program *
         }
         switch (key[1]) {
             case 'd':
-                if (gets) {
+                if (getd) {
                     error = true;
                     break;
                 }
-                gets = true;
+                getd = true;
                 date = getDate(pointer, line, error);
                 break;
             case 's':
@@ -864,13 +859,13 @@ void Parser::parseQueryTransfer(int &pointer, const std::string &line, Program *
         }
         if (error) {
             break;
+        }
     }
-    }
-    if (error || !gets || !gett || !getd || !getp) {
+    if (error || !gets || !gett || !getd) {
         std::cout << "-1" << std::endl;
         return;
     }
-    program->QueryTicket(station1, station2, date, query_type);
+    program->QueryTransfer(station1, station2, date, query_type);
 }
 
 void Parser::parseBuyTicket(int &pointer, const std::string &line, Program *program) {
@@ -879,7 +874,7 @@ void Parser::parseBuyTicket(int &pointer, const std::string &line, Program *prog
     sjtu::string<20> username, trainID;
     sjtu::string<30> station1, station2;
     int date, ticketnum;
-    bool buy_type;
+    bool buy_type = false;
     bool getu, geti, getd, getn, getf, gett, getq;
     getu = geti = getd = getn = getf = gett = getq = false;
     bool error = false;
@@ -960,7 +955,7 @@ void Parser::parseBuyTicket(int &pointer, const std::string &line, Program *prog
             break;
         }
     }
-    if (error || !getu || !geti || !getd || !getn || !getf || !gett || !getq) {
+    if (error || !getu || !geti || !getd || !getn || !getf || !gett) {
         std::cout << "-1" << std::endl;
         return;
     }
@@ -971,7 +966,7 @@ void Parser::parseQueryOrder(int &pointer, const std::string &line, Program *pro
     // std::cout << "parseQueryOrder" << std::endl;
     std::string key;
     sjtu::string<20> username;
-    bool error = true;
+    bool error = false;
     key = getword(pointer, line);
     if (key == "-u") {
         username = getword<20>(pointer, line, error, USERNAME);
@@ -990,7 +985,7 @@ void Parser::parseRefundTicket(int &pointer, const std::string &line, Program *p
     // std::cout << "parseRefundTicket" << std::endl;
     std::string key;
     sjtu::string<20> username;
-    int ticketnum;
+    int ticketnum = 1;
     bool getu = false, getn = false;
     bool error = false;
      while (pointer < line.length()) {
@@ -1023,7 +1018,7 @@ void Parser::parseRefundTicket(int &pointer, const std::string &line, Program *p
             break;
         }
     }
-    if (error || !getu || !getn) {
+    if (error || !getu) {
         std::cout << "-1" << std::endl;
         return;
     }

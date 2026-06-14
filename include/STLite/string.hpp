@@ -15,6 +15,11 @@ struct string {
         std::memset(data, 0, strlength);
     }
 
+    string(const char* str) {
+        len = std::strlen(str);
+        std::memcpy(data, str, len);
+    }
+
     string(const string &) = default;
 
     string &operator=(const string &) = default;

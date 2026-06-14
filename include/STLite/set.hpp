@@ -1,50 +1,28 @@
 #pragma once
 
 #include "utils/Error.hpp"
-#include "STLite/pair.hpp"
 
 namespace sjtu {
 
-template <class Key>
-class Compare {
-  public:
-    bool operator()(const Key &lhs, const Key &rhs) const {
-        return lhs < rhs;
-    }
-};
-
-template <class Key, class T, class Compare = Compare<Key>>
-class map {
+template <class T, class Compare = bool (*)(const T&, const T&)>
+class set {
   private:
     struct Node;
   public:
-    /**
-     * the internal type of data.
-     * it should have a default constructor, a copy constructor.
-     * You can use sjtu::map as value_type by typedef.
-     */
-    typedef pair<const Key, T> value_type;
-    /**
-     * see BidirectionalIterator at CppReference for help.
-     *
-     * if there is anything wrong throw invalid_iterator.
-     *     like it = map.begin(); --it;
-     *       or it = map.end(); ++end();
-     */
     class const_iterator;
     class iterator {
       private:
-        map* m;
+        set* s;
         Node* node;
         friend const_iterator;
-        friend map;
+        friend set;
 
       public:
         iterator() = default;
 
-        iterator(const iterator &other) : m(other.m), node(other.node) {}
+        iterator(const iterator &other) : s(other.s), node(other.node) {}
 
-        iterator(map* m, Node* node) : m(m), node(node) {};
+        iterator(set* s, Node* node) : s(s), node(node) {};
 
         iterator operator++(int) {
             if (node == nullptr) {
@@ -93,16 +71,17 @@ class map {
 
         iterator operator--(int) {
             iterator tmp = *this;
-            if (!m) {
+            if (!s) {
                 throw invalid_iterator();
             }
-            if (!node && m) {
-                // the map is empty
-                if (!m->root) {
+            if (!node && s) {
+                // the set is empty
+                if (!s->root) {
                     throw invalid_iterator();
                 }
-                // the map is not empty
-                node = m->root;
+
+                // the set is not empty
+                node = s->root;
                 while (node->right) {
                     node = node->right;
                 }
@@ -126,14 +105,14 @@ class map {
         }
 
         iterator &operator--() {
-            if (!m) {
+            if (!s) {
                 throw invalid_iterator();
             }
-            if (!node && m) {
-                if (!m->root) {
+            if (!node && s) {
+                if (!s->root) {
                     throw invalid_iterator();
                 }
-                node = m->root;
+                node = s->root;
                 while (node->right) {
                     node = node->right;
                 }
@@ -156,38 +135,30 @@ class map {
             throw invalid_iterator();
         }
 
-        value_type &operator*() const {
+        T &operator*() const {
             return node->data;
         }
 
         bool operator==(const iterator &rhs) const {
-            return node == rhs.node && m == rhs.m;
+            return node == rhs.node && s == rhs.s;
         }
 
         bool operator==(const const_iterator &rhs) const {
-            return node == rhs.node && m == rhs.m;
+            return node == rhs.node && s == rhs.s;
         }
 
         bool operator!=(const iterator &rhs) const {
-            return node != rhs.node || m != rhs.m;
+            return node != rhs.node || s != rhs.s;
         }
 
         bool operator!=(const const_iterator &rhs) const {
-            return node != rhs.node || m != rhs.m;
-        }
-
-        /**
-         * for the support of it->first.
-         * See <http://kelvinh.github.io/blog/2013/11/20/overloading-of-member-access-operator-dash-greater-than-symbol-in-cpp/> for help.
-         */
-        value_type *operator->() const noexcept {
-            return &node->data;
+            return node != rhs.node || s != rhs.s;
         }
     };
     class const_iterator {
       private:
         // data members.
-        const map *m;
+        const set *s;
         const Node *node;
         friend iterator;
         
@@ -195,16 +166,16 @@ class map {
         const_iterator() = default;
 
         const_iterator(const const_iterator &other) {
-            m = other.m;
+            s = other.s;
             node = other.node;
         }
 
         const_iterator(const iterator &other) {
-            m = other.m;
+            s = other.s;
             node = other.node;
         }
 
-        const_iterator(const map *m, const Node *node) : m(m), node(node) {}
+        const_iterator(const set *s, const Node *node) : s(s), node(node) {}
 
         const_iterator operator++(int) {
             if (node == nullptr) {
@@ -253,16 +224,16 @@ class map {
 
         const_iterator operator--(int) {
             const_iterator tmp = *this;
-            if (!m) {
+            if (!s) {
                 throw invalid_iterator();
             }
-            if (!node && m) {
-                // the map is empty
-                if (!m->root) {
+            if (!node && s) {
+                // the set is empty
+                if (!s->root) {
                     throw invalid_iterator();
                 }
-                // the map is not empty
-                node = m->root;
+                // the set is not empty
+                node = s->root;
                 while (node->right) {
                     node = node->right;
                 }
@@ -286,14 +257,14 @@ class map {
         }
 
         const_iterator &operator--() {
-            if (!m) {
+            if (!s) {
                 throw invalid_iterator();
             }
-            if (!node && m) {
-                if (!m->root) {
+            if (!node && s) {
+                if (!s->root) {
                     throw invalid_iterator();
                 }
-                node = m->root;
+                node = s->root;
                 while (node->right) {
                     node = node->right;
                 }
@@ -316,41 +287,33 @@ class map {
             throw invalid_iterator();
         }
 
-        const value_type &operator*() const {
+        const T &operator*() const {
             return node->data;
         }
 
         bool operator==(const iterator &rhs) const {
-            return node == rhs.node && m == rhs.m;
+            return node == rhs.node && s == rhs.s;
         }
 
         bool operator==(const const_iterator &rhs) const {
-            return node == rhs.node && m == rhs.m;
+            return node == rhs.node && s == rhs.s;
         }
 
         bool operator!=(const iterator &rhs) const {
-            return node != rhs.node || m != rhs.m;
+            return node != rhs.node || s != rhs.s;
         }
 
         bool operator!=(const const_iterator &rhs) const {
-            return node != rhs.node || m != rhs.m;
-        }
-
-        /**
-         * for the support of it->first.
-         * See <http://kelvinh.github.io/blog/2013/11/20/overloading-of-member-access-operator-dash-greater-than-symbol-in-cpp/> for help.
-         */
-        const value_type *operator->() const noexcept {
-            return &node->data;
+            return node != rhs.node || s != rhs.s;
         }
     };
 
   private:
     struct Node {
-        value_type data;
+        T data;
         Node *left, *right, *father;
         bool color; // true == Black, false == Red
-        Node(const value_type &data) : data(data), left(nullptr), right(nullptr), father(nullptr), color(false) {}
+        Node(const T &data) : data(data), left(nullptr), right(nullptr), father(nullptr), color(false) {}
     };
     Node *root, *begin_;
     size_t size_;
@@ -384,34 +347,6 @@ class map {
             makeEmpty(node->right);
         }
         delete node;
-    }
-
-    T &tryFind(const Key &key) const {
-        if (!root) {
-            throw index_out_of_bound();
-        }
-        Node *node = root;
-        while (true) {
-            if (compare(node->data.first, key)) {
-                if (node->right) {
-                    node = node->right;
-                    continue;
-                }
-                else {
-                    throw index_out_of_bound();
-                }
-            }
-            if (compare(key, node->data.first)) {
-                if (node->left) {
-                    node = node->left;
-                    continue;
-                }
-                else {
-                    throw index_out_of_bound();
-                }
-            }
-            return node->data.second;
-        }
     }
 
     /*
@@ -501,7 +436,7 @@ class map {
         }
     }
 
-    void removeAdjust(Node *&node, const Key *&key) {
+    void removeAdjust(Node *&node, const T *&data) {
         if (!node->color) {
             return;
         }
@@ -563,7 +498,8 @@ class map {
             }
         }
         else {
-            if (!compare(node->data.first, *key) && !compare(*key, node->data.first)) {
+            if (!compare(node->data, *data) && !compare(*data, node->data)) {
+
                 if (node->left && node->right) {
                     /*
                            1B*      LL     2B
@@ -597,7 +533,7 @@ class map {
                                                            /
                                                           2B*
                 */
-                if (compare(node->data.first, *key)) {
+                if (compare(node->data, *data)) {
                     node = node->right;
                 }
                 else {
@@ -613,7 +549,7 @@ class map {
                     else {
                         LL(node->father);
                     }
-                    removeAdjust(node, key);
+                    removeAdjust(node, data);
                 }
             }
         }
@@ -623,13 +559,13 @@ class map {
     /**
      * TODO two constructors
      */
-    map() {
+    set(Compare cmp) : compare(cmp) {
         root = nullptr;
         begin_ = nullptr;
         size_ = 0;
     }
 
-    map(const map &other) {
+    set(const set &other) : compare(other.compare) {
         if (other.root) {
             root = copy(other.root);
             root->father = nullptr;
@@ -649,10 +585,11 @@ class map {
     /**
      * TODO assignment operator
      */
-    map &operator=(const map &other) {
+    set &operator=(const set &other) {
         if (this == &other) {
             return *this;
         }
+        compare = other.compare;
         if (root) {
             makeEmpty(root);
         }
@@ -675,47 +612,11 @@ class map {
     /**
      * TODO Destructors
      */
-    ~map() {
+    ~set() {
         if (root) {
             makeEmpty(root);
         }
     }
-
-    /**
-     * TODO
-     * access specified element with bounds checking
-     * Returns a reference to the mapped value of the element with key equivalent to key.
-     * If no such element exists, an exception of type `index_out_of_bound'
-     */
-    T &at(const Key &key) {
-        return tryFind(key);
-    }
-
-    const T &at(const Key &key) const {
-        return tryFind(key);
-    }
-
-    /**
-     * TODO
-     * access specified element
-     * Returns a reference to the value that is mapped to a key equivalent to key,
-     *   performing an insertion if such key does not already exist.
-     */
-    T &operator[](const Key &key) {
-        iterator it = find(key);
-        if (it == end()) {
-            it = insert(value_type(key, T())).first;
-        }
-        return it->second;
-    }
-
-    /**
-     * behave like at() throw index_out_of_bound if such key does not exist.
-     */
-    const T &operator[](const Key &key) const {
-        return tryFind(key);
-    }
-
     /**
      * return a iterator to the beginning
      */
@@ -761,10 +662,11 @@ class map {
      *   the iterator to the new element (or the element that prevented the insertion),
      *   the second one is true if insert successfully, or false.
      */
-    pair<iterator, bool> insert(const value_type &value) {
+    pair<iterator, bool> insert(const T &data) {
         if (!root) {
-            root = new Node(value);
+            root = new Node(data);
             root->color = true;
+
             root->left = root->right = root->father = nullptr;
             begin_ = root;
             size_++;
@@ -783,11 +685,11 @@ class map {
                         insertAdjust(node->father, node);
                     }
                 }
-                if (compare(node->data.first, value.first)) {
+                if (compare(node->data, data)) {
                     father = node;
                     node = node->right;
                 }
-                else if (compare(value.first, node->data.first)) {
+                else if (compare(data, node->data)) {
                     father = node;
                     node = node->left;
                 }
@@ -796,11 +698,12 @@ class map {
                 }
             }
             else {
-                node = new Node(value);
+                node = new Node(data);
                 node->father = father;
+
                 node->color = false;
                 node->left = node->right = nullptr;
-                if (compare(value.first, father->data.first)) {
+                if (compare(data, father->data)) {
                     father->left = node;
                     if (father == begin_) {
                         begin_ = node;
@@ -823,14 +726,14 @@ class map {
      * throw if pos pointed to a bad element (pos == this->end() || pos points an element out of this)
      */
     void erase(iterator pos) {
-        if (!pos.node || pos.m != this) {
+        if (!pos.node || pos.s != this) {
             throw invalid_iterator();
         }
-        const Key *key = &(pos.node->data.first);
+        const T *data = &(pos.node->data);
         if (!root) {
             throw invalid_iterator();
         }
-        if (!compare(root->data.first, *key) && !compare(*key, root->data.first) && !root->left && !root->right) {
+        if (!compare(root->data, *data) && !compare(*data, root->data) && !root->left && !root->right) {
             if (root != pos.node) {
                 throw invalid_iterator();
             }
@@ -848,8 +751,8 @@ class map {
             if (!node) {
                 throw invalid_iterator();
             }
-            removeAdjust(node, key);
-            if (!compare(node->data.first, *key) && !compare(*key, node->data.first)) {
+            removeAdjust(node, data);
+            if (!compare(node->data, *data) && !compare(*data, node->data)) {
                 if (node->left && node->right) {
                     Node *tmp = node->right;
                     while (tmp->left) {
@@ -885,9 +788,9 @@ class map {
                         node->right = tmp->right;
                         tmp->right = node;
                     }
-                    node->data.~value_type();
-                    new (&node->data) value_type(tmp->data);
-                    key = &(node->data.first);
+                    node->data.~T();
+                    new (&node->data) T(tmp->data);
+                    data = &(node->data);
                     node = tmp->right;
                     continue;
                 }
@@ -940,7 +843,7 @@ class map {
                     return;
                 }
             }
-            if (compare(node->data.first, *key)) {
+            if (compare(node->data, *data)) {
                 node = node->right;
             }
             else {
@@ -956,13 +859,13 @@ class map {
      *     since this container does not allow duplicates.
      * The default method of check the equivalence is !(a < b || b > a)
      */
-    size_t count(const Key &key) const {
+    size_t count(const T &data) const {
         if (!root) {
             return 0;
         }
         Node *node = root;
         while (true) {
-            if (compare(node->data.first, key)) {
+            if (compare(node->data, data)) {
                 if (node->right) {
                     node = node->right;
                 }
@@ -970,7 +873,7 @@ class map {
                     return 0;
                 }
             }
-            else if (compare(key, node->data.first)) {
+            else if (compare(data, node->data)) {
                 if (node->left) {
                     node = node->left;
                 }
@@ -990,13 +893,13 @@ class map {
      * Iterator to an element with key equivalent to key.
      *   If no such element is found, past-the-end (see end()) iterator is returned.
      */
-    iterator find(const Key &key) {
+    iterator find(const T &data) {
         if (!root) {
             return iterator(this, nullptr);
         }
         Node *node = root;
         while (true) {
-            if (compare(node->data.first, key)) {
+            if (compare(node->data, data)) {
                 if (node->right) {
                     node = node->right;
                 }
@@ -1004,7 +907,7 @@ class map {
                     return iterator(this, nullptr);
                 }
             }
-            else if (compare(key, node->data.first)) {
+            else if (compare(data, node->data)) {
                 if (node->left) {
                     node = node->left;
                 }
@@ -1018,13 +921,13 @@ class map {
         }
     }
 
-    const_iterator find(const Key &key) const {
+    const_iterator find(const T &data) const {
         if (!root) {
             return const_iterator(this, nullptr);
         }
         Node *node = root;
         while (true) {
-            if (compare(node->data.first, key)) {
+            if (compare(node->data, data)) {
                 if (node->right) {
                     node = node->right;
                 }
@@ -1032,7 +935,7 @@ class map {
                     return const_iterator(this, nullptr);
                 }
             }
-            else if (compare(key, node->data.first)) {
+            else if (compare(data, node->data)) {
                 if (node->left) {
                     node = node->left;
                 }
@@ -1047,4 +950,4 @@ class map {
     }
 };
 
-}
+} // namespace sjtu

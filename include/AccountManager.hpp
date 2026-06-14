@@ -1,7 +1,6 @@
 #pragma once
 
 #include <fstream>
-#include <string>
 
 #include "STLite/BPT.hpp"
 #include "STLite/string.hpp"
@@ -23,11 +22,13 @@ class AccountManager {
   public:
     AccountManager();
     ~AccountManager();
-    void changeCount(int count);
-    int getCount();
+    void changeAccountCount(int count);
+    int getAccountCount();
 
     int getIndex(const sjtu::string<20> &username);
     void addAccount(sjtu::string<20> &username, sjtu::string<30> &password, sjtu::string<15> &name, sjtu::string<30> &mailAddr, int privilege);
     Account getAccount(int index);
     void writeAccount(int index, Account &account);
+
+    void clean();
 };

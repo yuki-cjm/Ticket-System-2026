@@ -6,10 +6,12 @@
 #include "Parser.hpp"
 #include "AccountManager.hpp"
 #include "TrainManager.hpp"
+#include "OrderManager.hpp"
 #include "STLite/vector.hpp"
 #include "STLite/pair.hpp"
 #include "STLite/map.hpp"
 #include "STLite/string.hpp"
+#include "STLite/deque.hpp"
 
 class Program {
   private:
@@ -17,8 +19,10 @@ class Program {
     std::fstream total_file;
     AccountManager accountmanager;
     TrainManager trainmanager;
+    OrderManager ordermanager;
     Parser parser;
     sjtu::map<sjtu::string<20>, int> loginrecorder;
+    sjtu::deque<int> pendingorders;
 
     bool programEnd_;
 
@@ -37,13 +41,13 @@ class Program {
     void QueryProfile(const sjtu::string<20> &cur_username, const sjtu::string<20> &username);
     void ModifyProfile(const sjtu::string<20> &cur_username, const sjtu::string<20> &username, const sjtu::string<30> &password, const sjtu::string<15> &name, const sjtu::string<30> &mailAddr, int privilege);
 
-    void AddTrain(const sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::vector<sjtu::string<30>> &stations, sjtu::vector<int> &prices, int startTime, sjtu::vector<int> &travelTimes, sjtu::vector<int> &stopoverTimes, sjtu::pair<int, int> saleDate, char type);
+    void AddTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::vector<sjtu::string<30>> &stations, sjtu::vector<int> &prices, int startTime, sjtu::vector<int> &travelTimes, sjtu::vector<int> &stopoverTimes, sjtu::pair<int, int> saleDate, char type);
     void DeleteTrain(const sjtu::string<20> &trainID);
     void ReleaseTrain(const sjtu::string<20> &trainID);
 
     void QueryTrain(const sjtu::string<20> &trainID, int date);
-    void QueryTicket(const sjtu::string<30> &station1, const sjtu::string<30> &station2, int date, bool query_type);
-    void QueryTransfer(const sjtu::string<30> &station1, const sjtu::string<30> station2, int date, bool query_type);
+    void QueryTicket(sjtu::string<30> &station1, sjtu::string<30> &station2, int date, bool query_type);
+    void QueryTransfer(sjtu::string<30> &station1, sjtu::string<30> station2, int date, bool query_type);
     void BuyTicket(const sjtu::string<20> &username, const sjtu::string<20> &trainID, int date, int ticketnum, sjtu::string<30> &station1, sjtu::string<30> &station2, bool buy_type);
     void QueryOrder(const sjtu::string<20> &username);
 

@@ -1,6 +1,4 @@
-#include <string>
 #include <fstream>
-#include <iostream>
 
 #include "AccountManager.hpp"
 #include "STLite/vector.hpp"
@@ -25,11 +23,11 @@ AccountManager::~AccountManager() {
     account_file.close();
 }
 
-void AccountManager::changeCount(int count) {
+void AccountManager::changeAccountCount(int count) {
     account_count = count;
 }
 
-int AccountManager::getCount() {
+int AccountManager::getAccountCount() {
     return account_count;
 }
 
@@ -68,4 +66,13 @@ void AccountManager::writeAccount(int index, Account &account) {
     account_file.write(reinterpret_cast<char*>(&account.name), sizeofname);
     account_file.write(reinterpret_cast<char*>(&account.mailAddr), sizeofmailAddr);
     account_file.write(reinterpret_cast<char*>(&account.privilege), sizeofint);
+}
+
+void AccountManager::clean() {
+    account_count = 0;
+    account_file.close();
+    account_file.open(account_filename, std::ios::out | std::ios::trunc | std::ios::binary);
+    account_file.close();
+    account_file.open(account_filename, std::ios::in | std::ios::out | std::ios::binary);
+    account_bpt.clear();
 }

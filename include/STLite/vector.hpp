@@ -2,7 +2,6 @@
 
 #include "utils/Error.hpp"
 
-
 namespace sjtu {
 /**
  * a data container like std::vector

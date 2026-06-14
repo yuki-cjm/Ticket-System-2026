@@ -15,6 +15,7 @@ include_directories(include)
 set(SOURCES
     src/AccountManager.cpp
     src/TrainManager.cpp
+    src/OrderManager.cpp
     src/Parser.cpp
     src/Program.cpp
     src/TicketSystem.cpp

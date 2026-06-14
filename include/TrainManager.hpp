@@ -9,16 +9,21 @@
 #include "STLite/string.hpp"
 
 struct Train {
+    sjtu::string<20> trainID;
     int stationNum;
     sjtu::vector<int> stations, sum_prices, seats, arrivingTimes, leavingTimes;
     char type;
     int state; // 0->unreleased, 1->released, 2->deleted
+
+    Train() = default;
 };
 
 struct StationDate {
     int station;
     int date;
 
+    StationDate() = default;
+    StationDate(int station, int date) : station(station), date(date) {}
     bool operator<(const StationDate &o) const { return station < o.station || date < o.date && station == o.station; }
     bool operator>(const StationDate &o) const { return station > o.station || date > o.date && station == o.station; }
     bool operator==(const StationDate &o) const { return station == o.station && date == o.date; }
@@ -27,20 +32,16 @@ struct StationDate {
 class TrainManager {
   private:
     int train_count, station_count;
-    std::string train_filename, station_filename;
-    std::fstream train_file, station_file;
+    std::string train_filename, trainID_filename, station_filename;
+    std::fstream train_file, trainID_file, station_file;
     BplusTree<sjtu::string<20>, int> train_bpt;
     BplusTree<sjtu::string<30>, int> station_bpt;
-    BplusTree<StationDate, int> stationdate_bpt;
-    static const int sizeofTrain = 2001; // 4 + 1 + 4 + 4 * （100 + 99 + 99 + 100 + 100）= 2001
+    BplusTree<StationDate, sjtu::pair<int, int>> stationdate_bpt;
+    static const int sizeofTrain = 2005 + sizeof(sjtu::string<20>); // 4 + 1 + 4 + 4 * （100 + 100 + 99 + 100 + 100）= 2005
 
-    void writeTrain(int index, Train &train);
-    void writeTrain(int index, int stationNum, char type, int state, sjtu::vector<int> &stations, sjtu::vector<int> &sum_prices, sjtu::vector<int> &seats, sjtu::vector<int> &arrivingTimes, sjtu::vector<int> leavingTimes);
+    void writeTrain(int index, sjtu::string<20> &trainID, int stationNum, char type, int state, sjtu::vector<int> &stations, sjtu::vector<int> &sum_prices, sjtu::vector<int> &seats, sjtu::vector<int> &arrivingTimes, sjtu::vector<int> leavingTimes);
+    void writeTrainID(int index, sjtu::string<20> &trainID);
     void writeStation(int index, sjtu::string<30> &station);
-// 未发布的train一个文件，已发布的train一个文件（每天都有不同的index的train）
-// 站点BPT(int 为data * 1000 + stationindex)
-// OrderManager
-// BPT记录username-orderindexs
 // index-订单信息: trainindex + startstationindex + endstationindex + seatnum + orderstate(success, pengding, refunded)
 // 候补购票队列可用deque记录orderindex
   public:
@@ -51,11 +52,17 @@ class TrainManager {
     void changeStationCount(int count);
     int getStationCount();
 
-    sjtu::vector<int> getTrainIndex(const sjtu::string<20> &trainID);
-    int getStationIndex(sjtu::string<30> &station);
-    void addTrain(const sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::vector<sjtu::string<30>> &stations, sjtu::vector<int> &prices, int startTime, sjtu::vector<int> &travelTimes, sjtu::vector<int> &stopoverTimes, sjtu::pair<int, int> saleDate, char type);
+    void writeTrain(int index, Train &train);
+    sjtu::vector<int> getTrainIndexs(const sjtu::string<20> &trainID);
     Train getTrain(int index);
+    int getStationIndex(sjtu::string<30> &station);
+    sjtu::string<20> getTrainID(int index);
+    sjtu::string<30> getStation(int index);
+    sjtu::vector<sjtu::pair<int, int>> getStationDateTrainStations(StationDate &stationdate);
+
+    void addTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::vector<sjtu::string<30>> &stations, sjtu::vector<int> &prices, int startTime, sjtu::vector<int> &travelTimes, sjtu::vector<int> &stopoverTimes, sjtu::pair<int, int> saleDate, char type);
     void deleteTrain(sjtu::vector<int> &indexs);
     void releaseTrain(sjtu::vector<int> &indexs);
-    sjtu::string<30> getStation(int index);
+
+    void clean();
 };

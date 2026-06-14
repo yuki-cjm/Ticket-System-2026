@@ -769,4 +769,26 @@ class BplusTree {
             }
         }
     }
+
+    void clear() {
+        file.close();
+        file.open(data_filename, std::ios::out | std::ios::trunc | std::ios::binary);
+        file.close();
+        file.open(basic_filename, std::ios::out | std::ios::trunc | std::ios::binary);
+        file.close();
+        deleted_Node *temp;
+        for (int i = 0; i < deleted_count; i++) {
+            temp = deleted_node;
+            deleted_node = deleted_node->next;
+            delete temp;
+        }
+        for (int i = 0; i < cache_size; i++) {
+            cache[i].node_index = -1;
+        }
+        file.open(data_filename, std::ios::in | std::ios::out | std::ios::binary);
+        Nodecount = 0;
+        root_index = -1;
+        deleted_count = 0;
+        deleted_node = nullptr;
+    }
 };
