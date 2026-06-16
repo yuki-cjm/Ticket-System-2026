@@ -5,17 +5,9 @@
 #include "STLite/string.hpp"
 
 void OrderManager::writeOrder(int index, int state, int train, int fromstation, int tostation, int fromstation_index, int tostation_index, int leavingtime, int arrivingtime, int price, int num) {
+    int buffer[10] = {state, train, fromstation, tostation, fromstation_index, tostation_index, leavingtime, arrivingtime, price, num};
     order_file.seekp(index * sizeoforder);
-    order_file.write(reinterpret_cast<char*>(&state), sizeofint);
-    order_file.write(reinterpret_cast<char*>(&train), sizeofint);
-    order_file.write(reinterpret_cast<char*>(&fromstation), sizeofint);
-    order_file.write(reinterpret_cast<char*>(&tostation), sizeofint);
-    order_file.write(reinterpret_cast<char*>(&fromstation_index), sizeofint);
-    order_file.write(reinterpret_cast<char*>(&tostation_index), sizeofint);
-    order_file.write(reinterpret_cast<char*>(&leavingtime), sizeofint);
-    order_file.write(reinterpret_cast<char*>(&arrivingtime), sizeofint);
-    order_file.write(reinterpret_cast<char*>(&price), sizeofint);
-    order_file.write(reinterpret_cast<char*>(&num), sizeofint);
+    order_file.write(reinterpret_cast<char*>(buffer), sizeoforder);
 }
 
 void OrderManager::writeOrder(int index, Order &order) {
@@ -26,6 +18,8 @@ void OrderManager::writeState(int index, int state) {
     order_file.seekp(index * sizeoforder);
     order_file.write(reinterpret_cast<char*>(&state), sizeofint);
 }
+
+
 
 OrderManager::OrderManager() : order_filename("orderdata"), userorder_bpt("orderdatabasic", "orderdataindex") {
     order_file.open(order_filename, std::ios::in | std::ios::out | std::ios::binary);
@@ -116,18 +110,20 @@ bool OrderManager::compareTransferCost(const Transfer &lhs, const Transfer &rhs)
 }
 
 Order OrderManager::getOrder(int index) {
+    int buffer[10];
     order_file.seekg(index * sizeoforder);
+    order_file.read(reinterpret_cast<char*>(buffer), sizeoforder);
     Order order;
-    order_file.read(reinterpret_cast<char*>(&order.state), sizeofint);
-    order_file.read(reinterpret_cast<char*>(&order.train), sizeofint);
-    order_file.read(reinterpret_cast<char*>(&order.fromstation), sizeofint);
-    order_file.read(reinterpret_cast<char*>(&order.tostation), sizeofint);
-    order_file.read(reinterpret_cast<char*>(&order.fromstation_index), sizeofint);
-    order_file.read(reinterpret_cast<char*>(&order.tostation_index), sizeofint);
-    order_file.read(reinterpret_cast<char*>(&order.leavingtime), sizeofint);
-    order_file.read(reinterpret_cast<char*>(&order.arrivingtime), sizeofint);
-    order_file.read(reinterpret_cast<char*>(&order.price), sizeofint);
-    order_file.read(reinterpret_cast<char*>(&order.num), sizeofint);
+    order.state = buffer[0];
+    order.train = buffer[1];
+    order.fromstation = buffer[2];
+    order.tostation = buffer[3];
+    order.fromstation_index = buffer[4];
+    order.tostation_index = buffer[5];
+    order.leavingtime = buffer[6];
+    order.arrivingtime = buffer[7];
+    order.price = buffer[8];
+    order.num = buffer[9];
     return order;
 }
 
@@ -137,6 +133,8 @@ int OrderManager::getState(int index) {
     order_file.read(reinterpret_cast<char*>(&state), sizeofint);
     return state;
 }
+
+
 
 void OrderManager::addPendingOrder(const sjtu::string<20> &username, int train, int fromstation, int tostation, int fromstation_index, int tostation_index, int leavingtime, int arrivingtime, int price, int num) {
     writeOrder(order_count, 1, train, fromstation, tostation, fromstation_index, tostation_index, leavingtime, arrivingtime, price, num);

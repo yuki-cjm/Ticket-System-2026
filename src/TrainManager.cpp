@@ -1,6 +1,8 @@
 #include <fstream>
+#include <cstring>
 
 #include "TrainManager.hpp"
+
 #include "STLite/vector.hpp"
 #include "STLite/BPT.hpp"
 #include "STLite/pair.hpp"
@@ -11,24 +13,39 @@ constexpr int sizeoftrainID = sizeof(sjtu::string<20>);
 constexpr int sizeofint = sizeof(int);
 constexpr int sizeofchar = sizeof(char);
 constexpr int sizeofstation = sizeof(sjtu::string<30>);
+constexpr int stateoffset = sizeoftrainID + sizeofint + sizeofint + sizeofchar;
 
 int culculateTime(int date, int time) {
     return date * daytime + time;
 }
 
 void TrainManager::writeTrain(int index, Train &train) {
+    static char buffer[sizeofTrain];
+    int offset = 0;
+    std::memcpy(buffer + offset, &train.trainID, sizeoftrainID);
+    offset += sizeoftrainID;
+    std::memcpy(buffer + offset, &train.stationNum, sizeofint);
+    offset += sizeofint;
+    std::memcpy(buffer + offset, &train.seatNum, sizeofint);
+    offset += sizeofint;
+    std::memcpy(buffer + offset, &train.type, sizeofchar);
+    offset += sizeofchar;
+    std::memcpy(buffer + offset, &train.state, sizeofint);
+    offset += sizeofint;
+    std::memcpy(buffer + offset, train.stations, train.stationNum * sizeofint);
+    offset += train.stationNum * sizeofint;
+    std::memcpy(buffer + offset, train.sum_prices, train.stationNum * sizeofint);
+    offset += train.stationNum * sizeofint;
+    std::memcpy(buffer + offset, train.seats, (train.stationNum - 1) * sizeofint);
+    offset += (train.stationNum - 1) * sizeofint;
+    std::memcpy(buffer + offset, train.arrivingTimes, train.stationNum * sizeofint);
+    offset += train.stationNum * sizeofint;
+    std::memcpy(buffer + offset, train.leavingTimes, train.stationNum * sizeofint);
+    offset += train.stationNum * sizeofint;
     train_file.seekp(sizeofTrain * index);
-    train_file.write(reinterpret_cast<char*>(&train.trainID), sizeoftrainID);
-    train_file.write(reinterpret_cast<char*>(&train.stationNum), sizeofint);
-    train_file.write(reinterpret_cast<char*>(&train.seatNum), sizeofint);
-    train_file.write(reinterpret_cast<char*>(&train.type), sizeofchar);
-    train_file.write(reinterpret_cast<char*>(&train.state), sizeofint);
-    train_file.write(reinterpret_cast<char*>(train.stations), train.stationNum * sizeofint);
-    train_file.write(reinterpret_cast<char*>(train.sum_prices), train.stationNum * sizeofint);
-    train_file.write(reinterpret_cast<char*>(train.seats), (train.stationNum - 1) * sizeofint);
-    train_file.write(reinterpret_cast<char*>(train.arrivingTimes), train.stationNum * sizeofint);
-    train_file.write(reinterpret_cast<char*>(train.leavingTimes), train.stationNum * sizeofint);
+    train_file.write(buffer, sizeofTrain);
 }
+
 
 
 void TrainManager::writeTrainID(int index, sjtu::string<20> &trainID) {
@@ -158,18 +175,30 @@ void TrainManager::addTrain(sjtu::string<20> &trainID, int stationNum, int seatN
 
 
 Train TrainManager::getTrain(int index) {
-    Train train;
+    static char buffer[sizeofTrain];
     train_file.seekg(sizeofTrain * index);
-    train_file.read(reinterpret_cast<char*>(&train.trainID), sizeoftrainID);
-    train_file.read(reinterpret_cast<char*>(&train.stationNum), sizeofint);
-    train_file.read(reinterpret_cast<char*>(&train.seatNum), sizeofint);
-    train_file.read(reinterpret_cast<char*>(&train.type), sizeofchar);
-    train_file.read(reinterpret_cast<char*>(&train.state), sizeofint);
-    train_file.read(reinterpret_cast<char*>(train.stations), train.stationNum * sizeofint);
-    train_file.read(reinterpret_cast<char*>(train.sum_prices), train.stationNum * sizeofint);
-    train_file.read(reinterpret_cast<char*>(train.seats), (train.stationNum - 1) * sizeofint);
-    train_file.read(reinterpret_cast<char*>(train.arrivingTimes), train.stationNum * sizeofint);
-    train_file.read(reinterpret_cast<char*>(train.leavingTimes), train.stationNum * sizeofint);
+    train_file.read(buffer, sizeofTrain);
+    Train train;
+    int offset = 0;
+    std::memcpy(&train.trainID, buffer + offset, sizeoftrainID);
+    offset += sizeoftrainID;
+    std::memcpy(&train.stationNum, buffer + offset, sizeofint);
+    offset += sizeofint;
+    std::memcpy(&train.seatNum, buffer + offset, sizeofint);
+    offset += sizeofint;
+    std::memcpy(&train.type, buffer + offset, sizeofchar);
+    offset += sizeofchar;
+    std::memcpy(&train.state, buffer + offset, sizeofint);
+    offset += sizeofint;
+    std::memcpy(train.stations, buffer + offset, train.stationNum * sizeofint);
+    offset += train.stationNum * sizeofint;
+    std::memcpy(train.sum_prices, buffer + offset, train.stationNum * sizeofint);
+    offset += train.stationNum * sizeofint;
+    std::memcpy(train.seats, buffer + offset, (train.stationNum - 1) * sizeofint);
+    offset += (train.stationNum - 1) * sizeofint;
+    std::memcpy(train.arrivingTimes, buffer + offset, train.stationNum * sizeofint);
+    offset += train.stationNum * sizeofint;
+    std::memcpy(train.leavingTimes, buffer + offset, train.stationNum * sizeofint);
     return train;
 }
 
@@ -184,7 +213,7 @@ sjtu::string<20> TrainManager::getTrainID(int index) {
 void TrainManager::deleteTrain(sjtu::string<20> &trainID, sjtu::vector<int> &indexs) {
     int state = 2;
     for (int index : indexs) {
-        train_file.seekp(sizeofTrain * index + sizeoftrainID + sizeofint + sizeofint + sizeofchar);
+        train_file.seekp(sizeofTrain * index + stateoffset);
         train_file.write(reinterpret_cast<char*>(&state), sizeofint);
         train_bpt.remove(trainID, index);
     }
@@ -198,7 +227,7 @@ void TrainManager::releaseTrain(sjtu::vector<int> &indexs) {
     Train train = getTrain(indexs[0]);
     StationDate stationdate;
     for (int i = 0; i < indexs.size(); i++) {
-        train_file.seekp(sizeofTrain * indexs[i] + sizeoftrainID + sizeofint + sizeofint + sizeofchar);
+        train_file.seekp(sizeofTrain * indexs[i] + stateoffset);
         train_file.write(reinterpret_cast<char*>(&state), sizeofint);
         for (int j = 0; j < train.stationNum - 1; j++) {
             stationdate.station = train.stations[j];

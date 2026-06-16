@@ -46,6 +46,7 @@ class TrainManager {
     BplusTree<StationDate, sjtu::pair<int, int>> stationdate_bpt;
     static const int sizeofTrain = 2009 + sizeof(sjtu::string<20>); // 4 + 1 + 4 + 4 + 4 * （100 + 100 + 99 + 100 + 100）= 2005
 
+
     void writeTrainID(int index, sjtu::string<20> &trainID);
 
     void writeStation(int index, sjtu::string<30> &station);

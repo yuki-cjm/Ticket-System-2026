@@ -41,6 +41,7 @@ class OrderManager {
     BplusTree<sjtu::string<20>, int> userorder_bpt;
     static constexpr int sizeoforder = 10 * sizeofint;
 
+
     void writeOrder(int index, int state, int train, int fromstation, int tostation, int fromstation_index, int tostation_index, int leavingtime, int arrivingtime, int price, int num);
   public:
     void writeOrder(int index, Order &order);

@@ -43,30 +43,27 @@ void AccountManager::addAccount(sjtu::string<20> &username, sjtu::string<30> &pa
     int index = account_count;
     account_count++;
     account_bpt.insert(username, index);
+    Account account;
+    account.password = password;
+    account.name = name;
+    account.mailAddr = mailAddr;
+    account.privilege = privilege;
     account_file.seekp(account_size * index);
-    account_file.write(reinterpret_cast<char*>(&password), sizeofpassword);
-    account_file.write(reinterpret_cast<char*>(&name), sizeofname);
-    account_file.write(reinterpret_cast<char*>(&mailAddr), sizeofmailAddr);
-    account_file.write(reinterpret_cast<char*>(&privilege), sizeofint);
+    account_file.write(reinterpret_cast<char*>(&account), account_size);
 }
 
 Account AccountManager::getAccount(int index) {
     account_file.seekg(account_size * index);
     Account account;
-    account_file.read(reinterpret_cast<char*>(&account.password), sizeofpassword);
-    account_file.read(reinterpret_cast<char*>(&account.name), sizeofname);
-    account_file.read(reinterpret_cast<char*>(&account.mailAddr), sizeofmailAddr);
-    account_file.read(reinterpret_cast<char*>(&account.privilege), sizeofint);
+    account_file.read(reinterpret_cast<char*>(&account), account_size);
     return account;
 }
 
 void AccountManager::writeAccount(int index, Account &account) {
     account_file.seekp(account_size * index);
-    account_file.write(reinterpret_cast<char*>(&account.password), sizeofpassword);
-    account_file.write(reinterpret_cast<char*>(&account.name), sizeofname);
-    account_file.write(reinterpret_cast<char*>(&account.mailAddr), sizeofmailAddr);
-    account_file.write(reinterpret_cast<char*>(&account.privilege), sizeofint);
+    account_file.write(reinterpret_cast<char*>(&account), account_size);
 }
+
 
 void AccountManager::clean() {
     account_count = 0;

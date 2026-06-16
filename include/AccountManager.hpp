@@ -18,7 +18,8 @@ class AccountManager {
     std::string account_filename;
     std::fstream account_file;
     BplusTree<sjtu::string<20>, int> account_bpt;
-    static const int account_size = sizeof(sjtu::string<30>) + sizeof(sjtu::string<15>) + sizeof(sjtu::string<30>) + sizeof(int);
+    static const int account_size = sizeof(Account);
+
   public:
     AccountManager();
     ~AccountManager();
