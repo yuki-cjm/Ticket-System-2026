@@ -113,6 +113,14 @@ int TrainManager::getStationIndex(sjtu::string<30> &station) {
     return indexs[0];
 }
 
+int TrainManager::findStationIndex(sjtu::string<30> &station) {
+    sjtu::vector<int> indexs = station_bpt.find(station);
+    if (indexs.empty()) {
+        return -1;
+    }
+    return indexs[0];
+}
+
 void TrainManager::addTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::vector<sjtu::string<30>> &stations, sjtu::vector<int> &prices, int startTime, sjtu::vector<int> &travelTimes, sjtu::vector<int> &stopoverTimes, sjtu::pair<int, int> saleDate, char type) {
     sjtu::vector<int> arrivingtimes, leavingtimes;
     sjtu::vector<int> seats(stationNum - 1, seatNum);
@@ -220,6 +228,10 @@ void TrainManager::releaseTrain(sjtu::vector<int> &indexs) {
             stationdate.date = -1;
             stationdate_bpt.insert(stationdate, sjtu::pair(indexs[i], j));
         }
+        stationdate.station = train.stations[train.stationNum - 1];
+        stationdate.date = -1;
+        stationdate_bpt.insert(stationdate, sjtu::pair(indexs[i], train.stationNum - 1));
+
     }
 }
 
@@ -230,7 +242,7 @@ sjtu::string<30> TrainManager::getStation(int index) {
     return station;
 }
 
-sjtu::vector<sjtu::pair<int, int>> TrainManager::getStationDateTrainStations(StationDate &stationdate) {
+sjtu::vector<sjtu::pair<int, int>> TrainManager::getStationDateTrainStations(StationDate stationdate) {
     return stationdate_bpt.find(stationdate);
 }
 

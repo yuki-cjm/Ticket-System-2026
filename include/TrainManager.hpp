@@ -29,6 +29,13 @@ struct StationDate {
     bool operator==(const StationDate &o) const { return station == o.station && date == o.date; }
 };
 
+struct StationInformation {
+    int seat, price, arrivingtime;
+
+    StationInformation() = default;
+    StationInformation(int seat, int price, int arrivingtime) : seat(seat), price(price), arrivingtime(arrivingtime) {}
+};
+
 class TrainManager {
   private:
     int train_count, station_count;
@@ -42,8 +49,6 @@ class TrainManager {
     void writeTrain(int index, sjtu::string<20> &trainID, int stationNum, int seatNum, char type, int state, sjtu::vector<int> &stations, sjtu::vector<int> &sum_prices, sjtu::vector<int> &seats, sjtu::vector<int> &arrivingTimes, sjtu::vector<int> leavingTimes);
     void writeTrainID(int index, sjtu::string<20> &trainID);
     void writeStation(int index, sjtu::string<30> &station);
-// index-订单信息: trainindex + startstationindex + endstationindex + seatnum + orderstate(success, pengding, refunded)
-// 候补购票队列可用deque记录orderindex
   public:
     TrainManager();
     ~TrainManager();
@@ -56,9 +61,10 @@ class TrainManager {
     sjtu::vector<int> getTrainIndexs(const sjtu::string<20> &trainID);
     Train getTrain(int index);
     int getStationIndex(sjtu::string<30> &station);
+    int findStationIndex(sjtu::string<30> &station);
     sjtu::string<20> getTrainID(int index);
     sjtu::string<30> getStation(int index);
-    sjtu::vector<sjtu::pair<int, int>> getStationDateTrainStations(StationDate &stationdate);
+    sjtu::vector<sjtu::pair<int, int>> getStationDateTrainStations(StationDate stationdate);
 
     void addTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::vector<sjtu::string<30>> &stations, sjtu::vector<int> &prices, int startTime, sjtu::vector<int> &travelTimes, sjtu::vector<int> &stopoverTimes, sjtu::pair<int, int> saleDate, char type);
     void deleteTrain(sjtu::string<20> &trainID, sjtu::vector<int> &indexs);

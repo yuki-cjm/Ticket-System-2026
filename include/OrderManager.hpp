@@ -17,7 +17,7 @@ struct Ticket {
 
 struct Transfer {
     sjtu::string<20> train1ID, train2ID;
-    sjtu::string<30> transferstation;
+    int transferstation;
     int leavingtime1, arrivingtime1, price1, seat1;
     int leavingtime2, arrivingtime2, price2, seat2;
 

@@ -362,8 +362,12 @@ void Program::QueryTicket(sjtu::string<30> &station1, sjtu::string<30> &station2
         compare = ordermanager.compareTicketCost;
     }
 
-    int fromstation_index = trainmanager.getStationIndex(station1);
-    int tostation_index = trainmanager.getStationIndex(station2);
+    int fromstation_index = trainmanager.findStationIndex(station1);
+    int tostation_index = trainmanager.findStationIndex(station2);
+    if (fromstation_index == -1 || tostation_index == -1) {
+        std::cout << "0\n";
+        return;
+    }
     StationDate stationdate(fromstation_index, date);
     sjtu::vector<sjtu::pair<int, int>> trainstations = trainmanager.getStationDateTrainStations(stationdate);
     Train train;
@@ -417,73 +421,77 @@ void Program::QueryTransfer(sjtu::string<30> &station1, sjtu::string<30> station
         compare = ordermanager.compareTransferCost;
     }
 
-    int fromstation_index = trainmanager.getStationIndex(station1);
-    int tostation_index = trainmanager.getStationIndex(station2);
-    StationDate stationdate(fromstation_index, date);
+    int fromstation_index = trainmanager.findStationIndex(station1);
+    int tostation_index = trainmanager.findStationIndex(station2);
     sjtu::vector<sjtu::pair<int, int>> trainstations1, trainstations2;
-    trainstations1 = trainmanager.getStationDateTrainStations(stationdate);
+    trainstations1 = trainmanager.getStationDateTrainStations(StationDate(fromstation_index, date));
+    trainstations2 = trainmanager.getStationDateTrainStations(StationDate(tostation_index, -1));
     Train train1, train2;
     int fromstation1, fromstation2;
     int tostation1, tostation2;
     int transferstation_index;
     int available_seat1, available_seat2;
-    sjtu::set<Transfer> transfers(compare);
-    Transfer transfer;
+    Transfer transfer, ans;
+    bool get = false;
+    sjtu::map<int, StationInformation>::iterator it;
     for (sjtu::pair<int, int> trainstation1 : trainstations1) {
         train1 = trainmanager.getTrain(trainstation1.first);
         fromstation1 = trainstation1.second;
-        available_seat1 = 1e5;
+        available_seat1 = train1.seatNum;
+        sjtu::map<int, StationInformation> stationinformation;
         for (tostation1 = fromstation1 + 1; tostation1 < train1.stationNum; tostation1++) {
-            transferstation_index = train1.stations[tostation1];
-            stationdate.station = transferstation_index;
-            stationdate.date = -1;
-            trainstations2 = trainmanager.getStationDateTrainStations(stationdate);
             if (train1.seats[tostation1 - 1] < available_seat1) {
                 available_seat1 = train1.seats[tostation1 - 1];
             }
-            for (sjtu::pair<int, int> trainstation2 : trainstations2) {
-                train2 = trainmanager.getTrain(trainstation2.first);
-                if (train1.trainID == train2.trainID) continue;
-                fromstation2 = trainstation2.second;
-                if (train1.arrivingTimes[tostation1] > train2.leavingTimes[fromstation2]) {
-                    continue;
+            stationinformation.insert(sjtu::pair(train1.stations[tostation1], StationInformation(available_seat1, train1.sum_prices[tostation1] - train1.sum_prices[fromstation1], train1.arrivingTimes[tostation1])));
+        }
+        for (sjtu::pair<int, int> trainstation2 : trainstations2) {
+            train2 = trainmanager.getTrain(trainstation2.first);
+            if (train1.trainID == train2.trainID) continue;
+            tostation2 = trainstation2.second;
+            if (train1.leavingTimes[fromstation1] >= train2.arrivingTimes[tostation2]) continue;
+            available_seat2 = train2.seatNum;
+            for (fromstation2 = tostation2 - 1; fromstation2 >= 0; fromstation2--) {
+                if (train2.seats[fromstation2] < available_seat2) {
+                    available_seat2 = train2.seats[fromstation2];
                 }
-                available_seat2 = 1e5;
-                for (tostation2 = fromstation2 + 1; tostation2 < train2.stationNum; tostation2++) {
-                    if (train2.seats[tostation2 - 1] < available_seat2) {
-                        available_seat2 = train2.seats[tostation2 - 1];
-                    }
-                    if (train2.stations[tostation2] == tostation_index) {
+                it = stationinformation.find(train2.stations[fromstation2]);
+                if (it != stationinformation.end()) {
+                    if (it->second.arrivingtime < train2.leavingTimes[fromstation2]) {
                         transfer.train1ID = train1.trainID;
                         transfer.train2ID = train2.trainID;
-                        transfer.transferstation = trainmanager.getStation(transferstation_index);
+                        transfer.transferstation = it->first;
                         transfer.leavingtime1 = train1.leavingTimes[fromstation1];
-                        transfer.arrivingtime1 = train1.arrivingTimes[tostation1];
                         transfer.leavingtime2 = train2.leavingTimes[fromstation2];
+                        transfer.arrivingtime1 = it->second.arrivingtime;
                         transfer.arrivingtime2 = train2.arrivingTimes[tostation2];
-                        transfer.price1 = train1.sum_prices[tostation1] - train1.sum_prices[fromstation1];
+                        transfer.price1 = it->second.price;
                         transfer.price2 = train2.sum_prices[tostation2] - train2.sum_prices[fromstation2];
-                        transfer.seat1 = available_seat1;
+                        transfer.seat1 = it->second.seat;
                         transfer.seat2 = available_seat2;
-                        transfers.insert(transfer);
-                        break;
+                        if (!get) {
+                            ans = transfer;
+                            get = true;
+                        } else if (compare(transfer, ans)) {
+                            ans = transfer;
+                        }
                     }
                 }
             }
         }
     }
-    if (transfers.size()) {
-        transfer = *(transfers.begin());
-        std::cout << transfer.train1ID << ' ' << station1 << ' ';
-        printTime(transfer.leavingtime1);
-        std::cout << " -> " << transfer.transferstation << ' ';
-        printTime(transfer.arrivingtime1);
-        std::cout << ' ' << transfer.price1 << ' ' << transfer.seat1 << '\n';
-        std::cout << transfer.train2ID << ' ' << transfer.transferstation << ' ';
-        printTime(transfer.leavingtime2);
+    if (get) {
+        sjtu::string<30> transferstation = trainmanager.getStation(ans.transferstation);
+        std::cout << ans.train1ID << ' ' << station1 << ' ';
+        printTime(ans.leavingtime1);
+        std::cout << " -> " << transferstation << ' ';
+        printTime(ans.arrivingtime1);
+        std::cout << ' ' << ans.price1 << ' ' << ans.seat1 << '\n';
+        std::cout << ans.train2ID << ' ' << transferstation << ' ';
+        printTime(ans.leavingtime2);
         std::cout << " -> " << station2 << ' ';
-        printTime(transfer.arrivingtime2);
-        std::cout << ' ' << transfer.price2 << ' ' << transfer.seat2 << '\n';
+        printTime(ans.arrivingtime2);
+        std::cout << ' ' << ans.price2 << ' ' << ans.seat2 << '\n';
     } else {
         std::cout << "0\n";
     }
@@ -515,8 +523,12 @@ void Program::BuyTicket(const sjtu::string<20> &username, const sjtu::string<20>
         std::cout << "-1\n";
         return;
     }
-    int fromstation_index = trainmanager.getStationIndex(station1);
-    int tostation_index = trainmanager.getStationIndex(station2);
+    int fromstation_index = trainmanager.findStationIndex(station1);
+    int tostation_index = trainmanager.findStationIndex(station2);
+    if (fromstation_index == -1 || tostation_index == -1) {
+        std::cout << "-1\n";
+        return;
+    }
     int fromstation, tostation;
     for (fromstation = 0; fromstation < train.stationNum && train.stations[fromstation] != fromstation_index; fromstation++) {}
     for (tostation = 0; tostation < train.stationNum && train.stations[tostation] != tostation_index; tostation++) {}
