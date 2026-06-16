@@ -17,32 +17,19 @@ int culculateTime(int date, int time) {
 }
 
 void TrainManager::writeTrain(int index, Train &train) {
-    writeTrain(index, train.trainID, train.stationNum, train.seatNum, train.type, train.state, train.stations, train.sum_prices, train.seats, train.arrivingTimes, train.leavingTimes);
+    train_file.seekp(sizeofTrain * index);
+    train_file.write(reinterpret_cast<char*>(&train.trainID), sizeoftrainID);
+    train_file.write(reinterpret_cast<char*>(&train.stationNum), sizeofint);
+    train_file.write(reinterpret_cast<char*>(&train.seatNum), sizeofint);
+    train_file.write(reinterpret_cast<char*>(&train.type), sizeofchar);
+    train_file.write(reinterpret_cast<char*>(&train.state), sizeofint);
+    train_file.write(reinterpret_cast<char*>(train.stations), train.stationNum * sizeofint);
+    train_file.write(reinterpret_cast<char*>(train.sum_prices), train.stationNum * sizeofint);
+    train_file.write(reinterpret_cast<char*>(train.seats), (train.stationNum - 1) * sizeofint);
+    train_file.write(reinterpret_cast<char*>(train.arrivingTimes), train.stationNum * sizeofint);
+    train_file.write(reinterpret_cast<char*>(train.leavingTimes), train.stationNum * sizeofint);
 }
 
-void TrainManager::writeTrain(int index, sjtu::string<20> &trainID, int stationNum, int seatNum, char type, int state, sjtu::vector<int> &stations, sjtu::vector<int> &sum_prices, sjtu::vector<int> &seats, sjtu::vector<int> &arrivingTimes, sjtu::vector<int> leavingTimes) {
-    train_file.seekp(sizeofTrain * index);
-    train_file.write(reinterpret_cast<char*>(&trainID), sizeoftrainID);
-    train_file.write(reinterpret_cast<char*>(&stationNum), sizeofint);
-    train_file.write(reinterpret_cast<char*>(&seatNum), sizeofint);
-    train_file.write(reinterpret_cast<char*>(&type), sizeofchar);
-    train_file.write(reinterpret_cast<char*>(&state), sizeofint);
-    for (auto it = stations.begin(); it != stations.end(); it++) {
-        train_file.write(reinterpret_cast<char*>(&(*it)), sizeofint);
-    }
-    for (auto it = sum_prices.begin(); it != sum_prices.end(); it++) {
-        train_file.write(reinterpret_cast<char*>(&(*it)), sizeofint);
-    }
-    for (auto it = seats.begin(); it != seats.end(); it++) {
-        train_file.write(reinterpret_cast<char*>(&(*it)), sizeofint);
-    }
-    for (auto it = arrivingTimes.begin(); it != arrivingTimes.end(); it++) {
-        train_file.write(reinterpret_cast<char*>(&(*it)), sizeofint);
-    }
-    for (auto it = leavingTimes.begin(); it != leavingTimes.end(); it++) {
-        train_file.write(reinterpret_cast<char*>(&(*it)), sizeofint);
-    }
-}
 
 void TrainManager::writeTrainID(int index, sjtu::string<20> &trainID) {
     trainID_file.seekp(index * sizeoftrainID);
@@ -121,79 +108,71 @@ int TrainManager::findStationIndex(sjtu::string<30> &station) {
     return indexs[0];
 }
 
-void TrainManager::addTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::vector<sjtu::string<30>> &stations, sjtu::vector<int> &prices, int startTime, sjtu::vector<int> &travelTimes, sjtu::vector<int> &stopoverTimes, sjtu::pair<int, int> saleDate, char type) {
-    sjtu::vector<int> arrivingtimes, leavingtimes;
-    sjtu::vector<int> seats(stationNum - 1, seatNum);
-    sjtu::vector<int> station_indexs;
-    sjtu::vector<int> sum_prices;
-    for (auto station : stations) {
-        station_indexs.push_back(getStationIndex(station));
+void TrainManager::addTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::string<30> *stations, int *prices, int startTime, int *travelTimes, int *stopoverTimes, sjtu::pair<int, int> saleDate, char type) {
+
+    Train train;
+    train.trainID = trainID;
+    train.stationNum = stationNum;
+    train.seatNum = seatNum;
+    train.type = type;
+    train.state = 0;
+    for (int i = 0; i < stationNum; i++) {
+        train.stations[i] = getStationIndex(stations[i]);
+    }
+    for (int i = 0; i < stationNum - 1; i++) {
+        train.seats[i] = seatNum;
     }
     int sum_time = saleDate.first * daytime + startTime;
     int sum_price = 0;
-    arrivingtimes.push_back(-1);
-    leavingtimes.push_back(sum_time);
-    sum_prices.push_back(sum_price);
+    train.arrivingTimes[0] = -1;
+    train.leavingTimes[0] = sum_time;
+    train.sum_prices[0] = sum_price;
     for (int i = 0; i < stationNum - 2; i++) {
         sum_time += travelTimes[i];
-        arrivingtimes.push_back(sum_time);
+        train.arrivingTimes[i + 1] = sum_time;
         sum_time += stopoverTimes[i];
-        leavingtimes.push_back(sum_time);
+        train.leavingTimes[i + 1] = sum_time;
         sum_price += prices[i];
-        sum_prices.push_back(sum_price);
+        train.sum_prices[i + 1] = sum_price;
     }
-    arrivingtimes.push_back(sum_time + travelTimes[stationNum - 2]);
-    leavingtimes.push_back(-1);
-    sum_prices.push_back(sum_price + prices[stationNum - 2]);
-    writeTrain(train_count, trainID, stationNum, seatNum, type, 0, station_indexs, sum_prices, seats, arrivingtimes, leavingtimes);
+    train.arrivingTimes[stationNum - 1] = sum_time + travelTimes[stationNum - 2];
+    train.leavingTimes[stationNum - 1] = -1;
+    train.sum_prices[stationNum - 1] = sum_price + prices[stationNum - 2];
+    writeTrain(train_count, train);
     writeTrainID(train_count, trainID);
     train_bpt.insert(trainID, train_count);
     train_count++;
     for (int i = saleDate.first + 1; i <= saleDate.second; i++) {
         for (int j = 0; j < stationNum; j++) {
-            arrivingtimes[j] += daytime;
-            leavingtimes[j] += daytime;
+            train.arrivingTimes[j] += daytime;
+            train.leavingTimes[j] += daytime;
         }
-        arrivingtimes[0] = -1;
-        leavingtimes[stationNum - 1] = -1;
-        writeTrain(train_count, trainID, stationNum, seatNum, type, 0, station_indexs, sum_prices, seats, arrivingtimes, leavingtimes);
+        train.arrivingTimes[0] = -1;
+        train.leavingTimes[stationNum - 1] = -1;
+        writeTrain(train_count, train);
         writeTrainID(train_count, trainID);
         train_bpt.insert(trainID, train_count);
         train_count++;
     }
 }
 
+
 Train TrainManager::getTrain(int index) {
     Train train;
-    int temp;
     train_file.seekg(sizeofTrain * index);
     train_file.read(reinterpret_cast<char*>(&train.trainID), sizeoftrainID);
     train_file.read(reinterpret_cast<char*>(&train.stationNum), sizeofint);
     train_file.read(reinterpret_cast<char*>(&train.seatNum), sizeofint);
     train_file.read(reinterpret_cast<char*>(&train.type), sizeofchar);
     train_file.read(reinterpret_cast<char*>(&train.state), sizeofint);
-    for (int i = 0; i < train.stationNum; i++) {
-        train_file.read(reinterpret_cast<char*>(&temp), sizeofint);
-        train.stations.push_back(temp);
-    }
-    for (int i = 0; i < train.stationNum; i++) {
-        train_file.read(reinterpret_cast<char*>(&temp), sizeofint);
-        train.sum_prices.push_back(temp);
-    }
-    for (int i = 0; i < train.stationNum - 1; i++) {
-        train_file.read(reinterpret_cast<char*>(&temp), sizeofint);
-        train.seats.push_back(temp);
-    }
-    for (int i = 0; i < train.stationNum; i++) {
-        train_file.read(reinterpret_cast<char*>(&temp), sizeofint);
-        train.arrivingTimes.push_back(temp);
-    }
-    for (int i = 0; i < train.stationNum; i++) {
-        train_file.read(reinterpret_cast<char*>(&temp), sizeofint);
-        train.leavingTimes.push_back(temp);
-    }
+    train_file.read(reinterpret_cast<char*>(train.stations), train.stationNum * sizeofint);
+    train_file.read(reinterpret_cast<char*>(train.sum_prices), train.stationNum * sizeofint);
+    train_file.read(reinterpret_cast<char*>(train.seats), (train.stationNum - 1) * sizeofint);
+    train_file.read(reinterpret_cast<char*>(train.arrivingTimes), train.stationNum * sizeofint);
+    train_file.read(reinterpret_cast<char*>(train.leavingTimes), train.stationNum * sizeofint);
     return train;
 }
+
 
 sjtu::string<20> TrainManager::getTrainID(int index) {
     trainID_file.seekg(index * sizeoftrainID);

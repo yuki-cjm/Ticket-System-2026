@@ -44,10 +44,9 @@ bool isletter(char c) {
     return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
 }
 
-// stations
-sjtu::vector<sjtu::string<30>> getStations(int &pointer, const std::string &line, bool &error)
+int getStations(int &pointer, const std::string &line, bool &error, sjtu::string<30> *answer)
 {
-    sjtu::vector<sjtu::string<30>> answer;
+    int count = 0;
     sjtu::string<30> str;
 
     while (line[pointer] == ' ' && pointer < line.length()) {
@@ -58,26 +57,26 @@ sjtu::vector<sjtu::string<30>> getStations(int &pointer, const std::string &line
         {
             if(str.empty() || str.length() % 3 != 0) {
                 error = true;
-                return answer;
+                return count;
             }
-            answer.push_back(str);
+            answer[count++] = str;
             str.clear();
         } else {
             str += line[pointer];
             if (str.length() == 30) {
                 error = true;
-                return answer;
+                return count;
             }
         }
         pointer++;
     }
-    answer.push_back(str);
-    return answer;
+    answer[count++] = str;
+    return count;
 }
 
-// prices, travelTimes, stopocerTimes
-sjtu::vector<int> getNums(int &pointer, const std::string &line, bool &error, wordType type) {
-    sjtu::vector<int> answer;
+// prices, travelTimes, stopocerTimes，写入 answer 数组，返回数字个数
+int getNums(int &pointer, const std::string &line, bool &error, wordType type, int *answer) {
+    int count = 0;
     int num = 0;
 
     while (line[pointer] == ' ' && pointer < line.length()) {
@@ -86,28 +85,29 @@ sjtu::vector<int> getNums(int &pointer, const std::string &line, bool &error, wo
 
     if (line[pointer] == '_' && (pointer == line.length() - 1 || line[pointer + 1] == ' ') && type == STOPOVERTIMES) {
         pointer++;
-        return answer;
+        return count;
     }
     while (line[pointer] != ' ' && pointer < line.length()) {
         if (line[pointer] == '|') {
             if (type == PRICES && num > 1e5 || type == TRAVELTIMES && num > 1e4 || type == STOPOVERTIMES && num > 1e4) {
                 error = true;
-                return answer;
+                return count;
             } else {
-                answer.push_back(num);
+                answer[count++] = num;
             }
             num = 0;
         } else if (isnum(line[pointer])) {
             num = num * 10 + (line[pointer] - '0');
         } else {
             error = true;
-            return answer;
+            return count;
         }
         pointer++;
     }
-    answer.push_back(num);
-    return answer;
+    answer[count++] = num;
+    return count;
 }
+
 
 // startTime
 int getStartTime(int &pointer, const std::string &line, bool &error) {
@@ -543,11 +543,13 @@ void Parser::parseAddTrain(int &pointer, const std::string &line, Program *progr
     std::string key;
     sjtu::string<20> trainID;
     int stationNum, seatNum, startTime;
-    sjtu::vector<sjtu::string<30>> stations;
-    sjtu::vector<int> prices, stopoverTimes, travelTimes;
+    sjtu::string<30> stations[100];
+    int prices[100], stopoverTimes[100], travelTimes[100];
+    int stationCount = 0, priceCount = 0, travelCount = 0, stopoverCount = 0;
     sjtu::pair<int, int> saleDate;
     char type;
     bool error = false;
+
     bool geti, getn, getm, gets, getp, getx, gett, geto, getd, gety;
     geti = getn = getm = gets = getp = getx = gett = geto = getd = gety = false;
     while (pointer < line.length()) {
@@ -587,16 +589,18 @@ void Parser::parseAddTrain(int &pointer, const std::string &line, Program *progr
                     break;
                 }
                 gets = true;
-                stations = getStations(pointer, line, error);
+                stationCount = getStations(pointer, line, error, stations);
                 break;
+
             case 'p':
                 if (getp) {
                     error = true;
                     break;
                 }
                 getp = true;
-                prices = getNums(pointer, line, error, PRICES);
+                priceCount = getNums(pointer, line, error, PRICES, prices);
                 break;
+
             case 'x':
                 if (getx) {
                     error = true;
@@ -611,16 +615,18 @@ void Parser::parseAddTrain(int &pointer, const std::string &line, Program *progr
                     break;
                 }
                 gett = true;
-                travelTimes = getNums(pointer, line, error, TRAVELTIMES);
+                travelCount = getNums(pointer, line, error, TRAVELTIMES, travelTimes);
                 break;
+
             case 'o':
                 if (geto) {
                     error = true;
                     break;
                 }
                 geto = true;
-                stopoverTimes = getNums(pointer, line, error, STOPOVERTIMES);
+                stopoverCount = getNums(pointer, line, error, STOPOVERTIMES, stopoverTimes);
                 break;
+
             case 'd':
                 if (getd) {
                     error = true;
@@ -650,7 +656,8 @@ void Parser::parseAddTrain(int &pointer, const std::string &line, Program *progr
             break;
         }
     }
-    if (error || !geti || !getn || !getm || !gets || !getp || !getx || !gett || !geto || !getd || !gety || prices.size() != stationNum - 1 || travelTimes.size() != stationNum - 1 || stopoverTimes.size() != stationNum - 2) {
+    if (error || !geti || !getn || !getm || !gets || !getp || !getx || !gett || !geto || !getd || !gety || stationCount != stationNum || priceCount != stationNum - 1 || travelCount != stationNum - 1 || stopoverCount != stationNum - 2) {
+
         std::cout << "-1\n";
         return;
     }

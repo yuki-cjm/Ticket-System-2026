@@ -247,7 +247,8 @@ void Program::ModifyProfile(const sjtu::string<20> &cur_username, const sjtu::st
     std::cout << username << ' ' << account.name << ' ' << account.mailAddr << ' ' << account.privilege << '\n';
 }
 
-void Program::AddTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::vector<sjtu::string<30>> &stations, sjtu::vector<int> &prices, int startTime, sjtu::vector<int> &travelTimes, sjtu::vector<int> &stopoverTimes, sjtu::pair<int, int> saleDate, char type) {
+void Program::AddTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::string<30> *stations, int *prices, int startTime, int *travelTimes, int *stopoverTimes, sjtu::pair<int, int> saleDate, char type) {
+
     // std::cout << "trainID: " << trainID << '\n';
     // std::cout << "stationNum: " << stationNum << '\n';
     // std::cout << "seatNum: " << seatNum << '\n';
@@ -378,7 +379,7 @@ void Program::QueryTicket(sjtu::string<30> &station1, sjtu::string<30> &station2
         trainindex = trainstation.first;
         fromstation = trainstation.second;
         train = trainmanager.getTrain(trainindex);
-        available_seat = 1e5;
+        available_seat = train.seatNum;
         for (tostation = trainstation.second + 1; tostation < train.stationNum; tostation++) {
             if (train.seats[tostation - 1] < available_seat) {
                 available_seat = train.seats[tostation - 1];
@@ -629,7 +630,7 @@ void Program::RefundTicket(const sjtu::string<20> &username, int ticketnum) {
                 it2++;
                 continue;
             }
-            int available_seat = 1e5;
+            int available_seat = train.seatNum;
             for (int station = pendingorder.fromstation; station < pendingorder.tostation; station++) {
                 if (train.seats[station] < available_seat) {
                     available_seat = train.seats[station];
