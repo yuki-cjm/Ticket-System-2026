@@ -11,7 +11,7 @@
 struct Train {
     sjtu::string<20> trainID;
     int stationNum, seatNum;
-    int stations[100], sum_prices[100], seats[99], arrivingTimes[100], leavingTimes[100];
+    int stations[40], sum_prices[40], seats[39], arrivingTimes[40], leavingTimes[40];
     char type;
     int state; // 0->unreleased, 1->released, 2->deleted
 
@@ -45,11 +45,10 @@ class TrainManager {
 
     BplusTree<sjtu::string<30>, int> station_bpt;
     BplusTree<StationDate, sjtu::pair<int, int>> stationdate_bpt;
-    static const int sizeofTrain = 2009 + sizeof(sjtu::string<20>); // 4 + 1 + 4 + 4 + 4 * （100 + 100 + 99 + 100 + 100）= 2005
+    static const int sizeofTrain = 813 + sizeof(sjtu::string<20>); // 4 + 1 + 4 + 4 + 4 * (40 + 40 + 39 + 40 + 40)= 813
 
 
     void writeTrainID(int index, sjtu::string<20> &trainID);
-
     void writeStation(int index, sjtu::string<30> &station);
   public:
     TrainManager();
