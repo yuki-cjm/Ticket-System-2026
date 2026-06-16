@@ -229,16 +229,11 @@ void TrainManager::releaseTrain(sjtu::vector<int> &indexs) {
     for (int i = 0; i < indexs.size(); i++) {
         train_file.seekp(sizeofTrain * indexs[i] + stateoffset);
         train_file.write(reinterpret_cast<char*>(&state), sizeofint);
-        for (int j = 0; j < train.stationNum - 1; j++) {
+        for (int j = 0; j < train.stationNum; j++) {
             stationdate.station = train.stations[j];
             stationdate.date = train.leavingTimes[j] / daytime + i;
             stationdate_bpt.insert(stationdate, sjtu::pair(indexs[i], j));
-            stationdate.date = -1;
-            stationdate_bpt.insert(stationdate, sjtu::pair(indexs[i], j));
         }
-        stationdate.station = train.stations[train.stationNum - 1];
-        stationdate.date = -1;
-        stationdate_bpt.insert(stationdate, sjtu::pair(indexs[i], train.stationNum - 1));
 
     }
 }

@@ -24,9 +24,9 @@ struct StationDate {
 
     StationDate() = default;
     StationDate(int station, int date) : station(station), date(date) {}
-    bool operator<(const StationDate &o) const { return station < o.station || date < o.date && station == o.station; }
-    bool operator>(const StationDate &o) const { return station > o.station || date > o.date && station == o.station; }
-    bool operator==(const StationDate &o) const { return station == o.station && date == o.date; }
+    bool operator<(const StationDate &o) const { return station < o.station || date < o.date && station == o.station && date != -1 && o.date != -1; }
+    bool operator>(const StationDate &o) const { return station > o.station || date > o.date && station == o.station && date != -1 && o.date != -1; }
+    bool operator==(const StationDate &o) const { return station == o.station && (date == o.date || date == -1 || o.date == -1); }
 };
 
 struct StationInformation {
