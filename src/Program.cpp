@@ -274,22 +274,23 @@ void Program::AddTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, s
     // std::cout << '\n';
     // std::cout << "saleDate: " << saleDate.first << ' ' << saleDate.second << '\n';
     // std::cout << "type: " << type << std::endl;
-    if (!trainmanager.getTrainIndexs(trainID).empty()) {
+    if (trainmanager.getTrainIndexs(trainID).first != -1) {
         std::cout << "-1\n";
         return;
     }
+
     trainmanager.addTrain(trainID, stationNum, seatNum, stations, prices, startTime, travelTimes, stopoverTimes, saleDate, type);
     std::cout << "0\n";
 }
 
 void Program::DeleteTrain(sjtu::string<20> &trainID) {
     // std::cout << "trainID: " << trainID << std::endl;
-    sjtu::vector<int> indexs = trainmanager.getTrainIndexs(trainID);
-    if (indexs.empty()) {
+    sjtu::pair<int, int> indexs = trainmanager.getTrainIndexs(trainID);
+    if (indexs.first == -1) {
         std::cout << "-1\n";
         return;
     }
-    Train train = trainmanager.getTrain(indexs[0]);
+    Train train = trainmanager.getTrain(indexs.first);
     if (train.state != 0) {
         std::cout << "-1\n";
         return;
@@ -300,12 +301,12 @@ void Program::DeleteTrain(sjtu::string<20> &trainID) {
 
 void Program::ReleaseTrain(const sjtu::string<20> &trainID) {
     // std::cout << "trainID: " << trainID << std::endl;
-    sjtu::vector<int> indexs = trainmanager.getTrainIndexs(trainID);
-    if (indexs.empty()) {
+    sjtu::pair<int, int> indexs = trainmanager.getTrainIndexs(trainID);
+    if (indexs.first == -1) {
         std::cout << "-1\n";
         return;
     }
-    Train train = trainmanager.getTrain(indexs[0]);
+    Train train = trainmanager.getTrain(indexs.first);
     if (train.state != 0) {
         std::cout << "-1\n";
         return;
@@ -317,19 +318,20 @@ void Program::ReleaseTrain(const sjtu::string<20> &trainID) {
 void Program::QueryTrain(const sjtu::string<20> &trainID, int date) {
     // std::cout << "trainID: " << trainID << '\n';
     // std::cout << "Date: " << date << std::endl;
-    sjtu::vector<int> indexs = trainmanager.getTrainIndexs(trainID);
-    if (indexs.empty()) {
+    sjtu::pair<int, int> indexs = trainmanager.getTrainIndexs(trainID);
+    if (indexs.first == -1) {
         std::cout << "-1\n";
         return;
     }
-    Train train = trainmanager.getTrain(indexs[0]);
+    Train train = trainmanager.getTrain(indexs.first);
     int startdate = train.leavingTimes[0] / daytime;
-    int index = date - startdate;
-    if (index < 0 || index >= indexs.size() || train.state == 2) {
+    int offset = date - startdate;
+    if (offset < 0 || indexs.first + offset >= indexs.second || train.state == 2) {
         std::cout << "-1\n";
         return;
     }
-    train = trainmanager.getTrain(indexs[index]);
+    train = trainmanager.getTrain(indexs.first + offset);
+
     int last = train.stationNum - 1;
     std::cout << trainID << ' ' << train.type << '\n';
     std::cout << trainmanager.getStation(train.stations[0]) << ' ' << "xx-xx xx:xx -> ";
@@ -515,12 +517,13 @@ void Program::BuyTicket(const sjtu::string<20> &username, const sjtu::string<20>
         std::cout << "-1\n";
         return;
     }
-    sjtu::vector<int> trainindexs = trainmanager.getTrainIndexs(trainID);
-    if (trainindexs.empty()) {
+    sjtu::pair<int, int> trainindexs = trainmanager.getTrainIndexs(trainID);
+    if (trainindexs.first == -1) {
         std::cout << "-1\n";
         return;
     }
-    Train train = trainmanager.getTrain(trainindexs[0]);
+    Train train = trainmanager.getTrain(trainindexs.first);
+
     if (train.state != 1 || ticketnum > train.seatNum) {
         std::cout << "-1\n";
         return;
@@ -539,11 +542,12 @@ void Program::BuyTicket(const sjtu::string<20> &username, const sjtu::string<20>
         return;
     }
     int dateoffset = date - train.leavingTimes[fromstation] / daytime;
-    if (dateoffset < 0 || dateoffset >= trainindexs.size()) {
+    if (dateoffset < 0 || trainindexs.first + dateoffset >= trainindexs.second) {
         std::cout << "-1\n";
         return;
     }
-    int trainindex = trainindexs[dateoffset];
+    int trainindex = trainindexs.first + dateoffset;
+
     train = trainmanager.getTrain(trainindex);
     int available_seat = 1e5;
     for (int station = fromstation; station < tostation; station++) {

@@ -103,9 +103,14 @@ int TrainManager::getStationCount() {
     return station_count;
 }
 
-sjtu::vector<int> TrainManager::getTrainIndexs(const sjtu::string<20> &trainID) {
-    return train_bpt.find(trainID);
+sjtu::pair<int, int> TrainManager::getTrainIndexs(const sjtu::string<20> &trainID) {
+    sjtu::vector<sjtu::pair<int, int>> indexs = train_bpt.find(trainID);
+    if (indexs.empty()) {
+        return sjtu::pair<int, int>(-1, -1);
+    }
+    return indexs[0];
 }
+
 
 int TrainManager::getStationIndex(sjtu::string<30> &station) {
     sjtu::vector<int> indexs = station_bpt.find(station);
@@ -155,9 +160,9 @@ void TrainManager::addTrain(sjtu::string<20> &trainID, int stationNum, int seatN
     train.arrivingTimes[stationNum - 1] = sum_time + travelTimes[stationNum - 2];
     train.leavingTimes[stationNum - 1] = -1;
     train.sum_prices[stationNum - 1] = sum_price + prices[stationNum - 2];
+    int headindex = train_count;
     writeTrain(train_count, train);
     writeTrainID(train_count, trainID);
-    train_bpt.insert(trainID, train_count);
     train_count++;
     for (int i = saleDate.first + 1; i <= saleDate.second; i++) {
         for (int j = 0; j < stationNum; j++) {
@@ -168,10 +173,11 @@ void TrainManager::addTrain(sjtu::string<20> &trainID, int stationNum, int seatN
         train.leavingTimes[stationNum - 1] = -1;
         writeTrain(train_count, train);
         writeTrainID(train_count, trainID);
-        train_bpt.insert(trainID, train_count);
         train_count++;
     }
+    train_bpt.insert(trainID, sjtu::pair<int, int>(headindex, train_count));
 }
+
 
 
 Train TrainManager::getTrain(int index) {
@@ -210,33 +216,34 @@ sjtu::string<20> TrainManager::getTrainID(int index) {
     return trainID;
 }
 
-void TrainManager::deleteTrain(sjtu::string<20> &trainID, sjtu::vector<int> &indexs) {
+void TrainManager::deleteTrain(sjtu::string<20> &trainID, sjtu::pair<int, int> &indexs) {
     int state = 2;
-    for (int index : indexs) {
+    for (int index = indexs.first; index < indexs.second; index++) {
         train_file.seekp(sizeofTrain * index + stateoffset);
         train_file.write(reinterpret_cast<char*>(&state), sizeofint);
-        train_bpt.remove(trainID, index);
     }
+    train_bpt.remove(trainID, indexs);
 }
 
-void TrainManager::releaseTrain(sjtu::vector<int> &indexs) {
-    if (indexs.empty()) {
+void TrainManager::releaseTrain(sjtu::pair<int, int> &indexs) {
+    if (indexs.first == -1) {
         return;
     }
     int state = 1;
-    Train train = getTrain(indexs[0]);
+    Train train = getTrain(indexs.first);
     StationDate stationdate;
-    for (int i = 0; i < indexs.size(); i++) {
-        train_file.seekp(sizeofTrain * indexs[i] + stateoffset);
+    for (int index = indexs.first; index < indexs.second; index++) {
+        train_file.seekp(sizeofTrain * index + stateoffset);
         train_file.write(reinterpret_cast<char*>(&state), sizeofint);
         for (int j = 0; j < train.stationNum; j++) {
             stationdate.station = train.stations[j];
-            stationdate.date = train.leavingTimes[j] / daytime + i;
-            stationdate_bpt.insert(stationdate, sjtu::pair(indexs[i], j));
+            stationdate.date = train.leavingTimes[j] / daytime + (index - indexs.first);
+            stationdate_bpt.insert(stationdate, sjtu::pair(index, j));
         }
 
     }
 }
+
 
 sjtu::string<30> TrainManager::getStation(int index) {
     station_file.seekg(sizeofstation * index);

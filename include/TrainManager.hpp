@@ -41,7 +41,8 @@ class TrainManager {
     int train_count, station_count;
     std::string train_filename, trainID_filename, station_filename;
     std::fstream train_file, trainID_file, station_file;
-    BplusTree<sjtu::string<20>, int> train_bpt;
+    BplusTree<sjtu::string<20>, sjtu::pair<int, int>> train_bpt;
+
     BplusTree<sjtu::string<30>, int> station_bpt;
     BplusTree<StationDate, sjtu::pair<int, int>> stationdate_bpt;
     static const int sizeofTrain = 2009 + sizeof(sjtu::string<20>); // 4 + 1 + 4 + 4 + 4 * （100 + 100 + 99 + 100 + 100）= 2005
@@ -59,7 +60,8 @@ class TrainManager {
     int getStationCount();
 
     void writeTrain(int index, Train &train);
-    sjtu::vector<int> getTrainIndexs(const sjtu::string<20> &trainID);
+    sjtu::pair<int, int> getTrainIndexs(const sjtu::string<20> &trainID);
+
     Train getTrain(int index);
     int getStationIndex(sjtu::string<30> &station);
     int findStationIndex(sjtu::string<30> &station);
@@ -69,8 +71,9 @@ class TrainManager {
 
     void addTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::string<30> *stations, int *prices, int startTime, int *travelTimes, int *stopoverTimes, sjtu::pair<int, int> saleDate, char type);
 
-    void deleteTrain(sjtu::string<20> &trainID, sjtu::vector<int> &indexs);
-    void releaseTrain(sjtu::vector<int> &indexs);
+    void deleteTrain(sjtu::string<20> &trainID, sjtu::pair<int, int> &indexs);
+    void releaseTrain(sjtu::pair<int, int> &indexs);
+
 
     void clean();
 };
