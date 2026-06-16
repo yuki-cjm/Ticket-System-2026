@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <iomanip>
 
 #include "Program.hpp"
 #include "AccountManager.hpp"
@@ -17,13 +18,7 @@ constexpr int daytime = 1440;
 constexpr int hourtime = 60;
 
 void printNum(int num) {
-    if (num >= 10) {
-        std::cout << num;
-    } else if (num >= 1) {
-        std::cout << '0' << num;
-    } else {
-        std::cout << "00";
-    }
+    std::cout << std::setfill('0') << std::setw(2) << num;
 }
 
 const int monthday[13] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
