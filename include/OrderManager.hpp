@@ -44,6 +44,7 @@ class OrderManager {
     void writeOrder(int index, int state, int train, int fromstation, int tostation, int fromstation_index, int tostation_index, int leavingtime, int arrivingtime, int price, int num);
   public:
     void writeOrder(int index, Order &order);
+    void writeState(int index, int state);
 
     OrderManager();
     ~OrderManager();
@@ -56,6 +57,7 @@ class OrderManager {
     static bool compareTransferCost(const Transfer &lhs, const Transfer &rhs);
 
     Order getOrder(int index);
+    int getState(int index);
     void addPendingOrder(const sjtu::string<20> &username, int trainID, int fromstation, int tostation, int fromstation_index, int tostation_index, int leavingtime, int arrivingtime, int price, int num);
     void addSuccessOrder(const sjtu::string<20> &username, int trainID, int fromstation, int tostation, int fromstation_index, int tostation_index, int leavingtime, int arrivingtime, int price, int num);
     sjtu::vector<int> getOrderIndexs(const sjtu::string<20> &username);

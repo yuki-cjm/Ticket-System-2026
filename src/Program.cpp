@@ -458,7 +458,8 @@ void Program::QueryTransfer(sjtu::string<30> &station1, sjtu::string<30> station
                 }
                 it = stationinformation.find(train2.stations[fromstation2]);
                 if (it != stationinformation.end()) {
-                    if (it->second.arrivingtime < train2.leavingTimes[fromstation2]) {
+                    if (it->second.arrivingtime <= train2.leavingTimes[fromstation2]) {
+
                         transfer.train1ID = train1.trainID;
                         transfer.train2ID = train2.trainID;
                         transfer.transferstation = it->first;
@@ -640,8 +641,7 @@ void Program::RefundTicket(const sjtu::string<20> &username, int ticketnum) {
                 for (int station = pendingorder.fromstation; station < pendingorder.tostation; station++) {
                     train.seats[station] -= pendingorder.num;
                 }
-                pendingorder.state = 0;
-                ordermanager.writeOrder(*it2, pendingorder);
+                ordermanager.writeState(*it2, 0);
                 it2 = pendingorders.erase(it2);
             } else {
                 it2++;
@@ -659,8 +659,7 @@ void Program::RefundTicket(const sjtu::string<20> &username, int ticketnum) {
         std::cout << "-1\n";
         return;
     }
-    order.state = 2;
-    ordermanager.writeOrder(*it, order);
+    ordermanager.writeState(*it, 2);
     std::cout << "0\n";
 }
 

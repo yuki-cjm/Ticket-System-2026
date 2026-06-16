@@ -22,6 +22,11 @@ void OrderManager::writeOrder(int index, Order &order) {
     writeOrder(index, order.state, order.train, order.fromstation, order.tostation, order.fromstation_index, order.tostation_index, order.leavingtime, order.arrivingtime, order.price, order.num);
 }
 
+void OrderManager::writeState(int index, int state) {
+    order_file.seekp(index * sizeoforder);
+    order_file.write(reinterpret_cast<char*>(&state), sizeofint);
+}
+
 OrderManager::OrderManager() : order_filename("orderdata"), userorder_bpt("orderdatabasic", "orderdataindex") {
     order_file.open(order_filename, std::ios::in | std::ios::out | std::ios::binary);
     if (!order_file) {
@@ -124,6 +129,13 @@ Order OrderManager::getOrder(int index) {
     order_file.read(reinterpret_cast<char*>(&order.price), sizeofint);
     order_file.read(reinterpret_cast<char*>(&order.num), sizeofint);
     return order;
+}
+
+int OrderManager::getState(int index) {
+    int state;
+    order_file.seekg(index * sizeoforder);
+    order_file.read(reinterpret_cast<char*>(&state), sizeofint);
+    return state;
 }
 
 void OrderManager::addPendingOrder(const sjtu::string<20> &username, int train, int fromstation, int tostation, int fromstation_index, int tostation_index, int leavingtime, int arrivingtime, int price, int num) {
