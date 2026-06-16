@@ -6,8 +6,8 @@ int main() {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
-    freopen("../testcases/84.in", "r", stdin);
-    freopen("../ans.out", "w", stdout);
+    // freopen("../testcases/84.in", "r", stdin);
+    // freopen("../ans.out", "w", stdout);
 
     Program program;
     std::string line;
