@@ -14,7 +14,7 @@ inline constexpr int StationLength = 30;
 
 inline constexpr int maxPrivilege = 10;
 inline constexpr int minStationNum = 2;
-inline constexpr int maxStationNum = 40;
+inline constexpr int maxStationNum = 100;
 inline constexpr int maxSeatNum = 100000;
 inline constexpr int maxPrice = 100000;
 inline constexpr int maxTravelTime = 10000;
