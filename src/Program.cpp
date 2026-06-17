@@ -8,12 +8,12 @@
 #include "AccountManager.hpp"
 #include "TrainManager.hpp"
 #include "OrderManager.hpp"
-#include "tools.hpp"
 #include "STLite/vector.hpp"
 #include "STLite/pair.hpp"
 #include "STLite/map.hpp"
 #include "STLite/string.hpp"
 #include "STLite/deque.hpp"
+#include "utils/tools.hpp"
 
 Program::Program() : total_filename("total") {
     total_file.open(total_filename, std::ios::in | std::ios::out | std::ios::binary);
@@ -79,13 +79,6 @@ bool Program::programRun() {
 }
 
 void Program::AddUser(sjtu::string<20> &cur_username, sjtu::string <20>&username, sjtu::string<30> &password, sjtu::string<15> &name, sjtu::string<30> &mailAddr, int privilege) {
-    // std::cout << "cur_username: " << cur_username << '\n';
-    // std::cout << "username: " << username << '\n';
-    // std::cout << "password: " << password << '\n';
-    // std::cout << "name: " << name << '\n';
-    // std::cout << "mailAddr: " << mailAddr << '\n';
-    // std::cout << "privilege: " << privilege << std::endl;
-
     if (accountmanager.getAccountCount() == 0) {
         accountmanager.addAccount(username, password, name, mailAddr, 10);
         std::cout << "0\n";
@@ -109,8 +102,6 @@ void Program::AddUser(sjtu::string<20> &cur_username, sjtu::string <20>&username
 }
 
 void Program::Login(const sjtu::string<20> &username, const sjtu::string<30> &password) {
-    // std::cout << "username: " << username << '\n';
-    // std::cout << "password: " << password << std::endl;
     int index = accountmanager.getIndex(username);
     if (index == -1) {
         std::cout << "-1\n";
@@ -130,7 +121,6 @@ void Program::Login(const sjtu::string<20> &username, const sjtu::string<30> &pa
 }
 
 void Program::Logout(const sjtu::string<20> &username) {
-    // std::cout << "username: " << username << std::endl;
     auto it = loginrecorder.find(username);
     if (it == loginrecorder.end()) {
         std::cout << "-1\n";
@@ -141,8 +131,6 @@ void Program::Logout(const sjtu::string<20> &username) {
 }
 
 void Program::QueryProfile(const sjtu::string<20> &cur_username, const sjtu::string<20> &username) {
-    // std::cout << "cur_username: " << cur_username << '\n';
-    // std::cout << "username: " << username << std::endl;
     auto it = loginrecorder.find(cur_username);
     if (it == loginrecorder.end()) {
         std::cout << "-1\n";
@@ -162,20 +150,6 @@ void Program::QueryProfile(const sjtu::string<20> &cur_username, const sjtu::str
 }
 
 void Program::ModifyProfile(const sjtu::string<20> &cur_username, const sjtu::string<20> &username, const sjtu::string<30> &password, const sjtu::string<15> &name, const sjtu::string<30> &mailAddr, int privilege) {
-    // std::cout << "cur_username: " << cur_username << '\n';
-    // std::cout << "username: " << username << std::endl;
-    // if (!password.empty()) {
-    //     std::cout << "password: " << password << std::endl;
-    // }
-    // if (!name.empty()) {
-    //     std::cout << "name: " << name << std::endl;
-    // }
-    // if (!mailAddr.empty()) {
-    //     std::cout << "mailAddr: " << mailAddr << std::endl;
-    // }
-    // if (privilege != -1) {
-    //     std::cout << "privilege: " << privilege << std::endl;
-    // }
     auto it = loginrecorder.find(cur_username);
     if (it == loginrecorder.end()) {
         std::cout << "-1\n";
@@ -216,32 +190,6 @@ void Program::ModifyProfile(const sjtu::string<20> &cur_username, const sjtu::st
 }
 
 void Program::AddTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::string<30> *stations, int *prices, int startTime, int *travelTimes, int *stopoverTimes, sjtu::pair<int, int> saleDate, char type) {
-
-    // std::cout << "trainID: " << trainID << '\n';
-    // std::cout << "stationNum: " << stationNum << '\n';
-    // std::cout << "seatNum: " << seatNum << '\n';
-    // std::cout << "stations: ";
-    // for (auto station : stations) {
-    //     std::cout << station << ' ';
-    // }
-    // std::cout << '\n';
-    // std::cout << "prices: ";
-    // for (auto price : prices) {
-    //     std::cout << price << ' ';
-    // }
-    // std::cout << '\n';
-    // std::cout << "startTime: " << startTime / 60 << ':' << startTime % 60 << '\n';
-    // for (auto travelTime : travelTimes) {
-    //     std::cout << travelTime << ' ';
-    // }
-    // std::cout << '\n';
-    // std::cout << "stopoverTimes: ";
-    // for (auto stopoverTime : stopoverTimes) {
-    //     std::cout << stopoverTime << ' ';
-    // }
-    // std::cout << '\n';
-    // std::cout << "saleDate: " << saleDate.first << ' ' << saleDate.second << '\n';
-    // std::cout << "type: " << type << std::endl;
     if (trainmanager.getTrainIDIndex(trainID) != -1) {
         std::cout << "-1\n";
         return;
@@ -252,7 +200,6 @@ void Program::AddTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, s
 }
 
 void Program::DeleteTrain(sjtu::string<20> &trainID) {
-    // std::cout << "trainID: " << trainID << std::endl;
     int index = trainmanager.getTrainIDIndex(trainID);
     if (index == -1) {
         std::cout << "-1\n";
@@ -267,7 +214,6 @@ void Program::DeleteTrain(sjtu::string<20> &trainID) {
 }
 
 void Program::ReleaseTrain(sjtu::string<20> &trainID) {
-    // std::cout << "trainID: " << trainID << std::endl;
     int index = trainmanager.getTrainIDIndex(trainID);
     if (index == -1) {
         std::cout << "-1\n";
@@ -282,8 +228,6 @@ void Program::ReleaseTrain(sjtu::string<20> &trainID) {
 }
 
 void Program::QueryTrain(const sjtu::string<20> &trainID, int date) {
-    // std::cout << "trainID: " << trainID << '\n';
-    // std::cout << "Date: " << date << std::endl;
     int index = trainmanager.getTrainIDIndex(trainID);
     if (index == -1) {
         std::cout << "-1\n";
@@ -293,41 +237,14 @@ void Program::QueryTrain(const sjtu::string<20> &trainID, int date) {
 }
 
 void Program::QueryTicket(sjtu::string<30> &station1, sjtu::string<30> &station2, int date, bool query_type) {
-    // std::cout << "station1: " << station1 << '\n';
-    // std::cout << "station2: " << station2 << '\n';
-    // std::cout << "date: " << date << '\n';
-    // if (!query_type) {
-    //     std::cout << "time" << std::endl;
-    // } else {
-    //     std::cout << "cost" << std::endl;
-    // }
     trainmanager.queryTicket(station1, station2, date, query_type);
 }
 
 void Program::QueryTransfer(sjtu::string<30> &station1, sjtu::string<30> station2, int date, bool query_type) {
-    // std::cout << "station1: " << station1 << '\n';
-    // std::cout << "station2: " << station2 << '\n';
-    // std::cout << "date: " << date << '\n';
-    // if (!query_type) {
-    //     std::cout << "time" << std::endl;
-    // } else {
-    //     std::cout << "cose" << std::endl;
-    // }
     trainmanager.queryTransfer(station1, station2, date, query_type);
 }
 
 void Program::BuyTicket(const sjtu::string<20> &username, sjtu::string<20> &trainID, int date, int ticketnum, sjtu::string<30> &station1, sjtu::string<30> &station2, bool buy_type) {
-    // std::cout << "username: " << username << '\n';
-    // std::cout << "trainID: " << trainID << '\n';
-    // std::cout << "date: " << date << '\n';
-    // std::cout << "ticketnum: " << ticketnum << '\n';
-    // std::cout << "station1: " << station1 << '\n';
-    // std::cout << "station2: " << station2 << '\n';
-    // if (!buy_type) {
-    //     std::cout << "false" << std::endl;
-    // } else {
-    //     std::cout << "true" << std::endl;
-    // }
     if (loginrecorder.find(username) == loginrecorder.end()) {
         std::cout << "-1\n";
         return;
@@ -386,7 +303,6 @@ void Program::BuyTicket(const sjtu::string<20> &username, sjtu::string<20> &trai
 }
 
 void Program::QueryOrder(const sjtu::string<20> &username) {
-    // std::cout << "username: " << username << std::endl;
     if (loginrecorder.find(username) == loginrecorder.end()) {
         std::cout << "-1\n";
         return;
@@ -418,8 +334,6 @@ void Program::QueryOrder(const sjtu::string<20> &username) {
 }
 
 void Program::RefundTicket(const sjtu::string<20> &username, int ticketnum) {
-    // std::cout << "username: " << username << '\n';
-    // std::cout << "ticketnum: " << ticketnum << std::endl;
     if (loginrecorder.find(username) == loginrecorder.end()) {
         std::cout << "-1\n";
         return;

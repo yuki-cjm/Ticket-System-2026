@@ -2,12 +2,12 @@
 #include <cstring>
 
 #include "TrainManager.hpp"
-#include "tools.hpp"
 #include "STLite/vector.hpp"
 #include "STLite/BPT.hpp"
 #include "STLite/pair.hpp"
 #include "STLite/string.hpp"
 #include "STLite/set.hpp"
+#include "utils/tools.hpp"
 
 bool TrainManager::compareTicketTime(const Ticket &lhs, const Ticket &rhs) {
     if (lhs.arrivingtime - lhs.leavingtime < rhs.arrivingtime - rhs.leavingtime) { return true; }
