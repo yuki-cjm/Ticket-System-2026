@@ -3,11 +3,9 @@
 
 #include "Parser.hpp"
 #include "Program.hpp"
+#include "tools.hpp"
 #include "STLite/vector.hpp"
 #include "STLite/string.hpp"
-
-constexpr int daytime = 1440;
-constexpr int hourtime = 60;
 
 enum wordType {
     DEFAULT,
@@ -29,7 +27,6 @@ enum wordType {
     DATE,
     STATION
 };
-
 
 bool isvisibleletter(char &c)
 {
@@ -128,8 +125,6 @@ int getStartTime(int &pointer, const std::string &line, bool &error) {
     }
 }
 
-const int monthday[13] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-const int sumday[13] = {0, 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
 
 bool judgeDateCorrectness(int month, int day) {
     if (month < 1 || month > 12) {

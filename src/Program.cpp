@@ -1,51 +1,19 @@
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <fstream>
+#include <cmath>
 
 #include "Program.hpp"
 #include "AccountManager.hpp"
 #include "TrainManager.hpp"
 #include "OrderManager.hpp"
+#include "tools.hpp"
 #include "STLite/vector.hpp"
 #include "STLite/pair.hpp"
 #include "STLite/map.hpp"
 #include "STLite/string.hpp"
-#include "STLite/set.hpp"
 #include "STLite/deque.hpp"
-
-constexpr int daytime = 1440;
-constexpr int hourtime = 60;
-
-void printNum(int num) {
-    if (num >= 10) {
-        std::cout << num;
-    } else if (num >= 1) {
-        std::cout << '0' << num;
-    } else {
-        std::cout << "00";
-    }
-}
-
-const int monthday[13] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-void printTime(int time) {
-    int day = time / daytime, month;
-    for (month = 1; month <= 12; month++) {
-        if (day > monthday[month]) {
-            day -= monthday[month];
-        } else {
-            break;
-        }
-    }
-    time %= daytime;
-    printNum(month);
-    std::cout << '-';
-    printNum(day);
-    std::cout << ' ';
-    printNum(time / hourtime);
-    std::cout << ':';
-    printNum(time % hourtime);
-}
 
 Program::Program() : total_filename("total") {
     total_file.open(total_filename, std::ios::in | std::ios::out | std::ios::binary);
@@ -54,8 +22,8 @@ Program::Program() : total_filename("total") {
         total_file.close();
         total_file.open(total_filename, std::ios::in | std::ios::out | std::ios::binary);
         accountmanager.changeAccountCount(0);
+        trainmanager.changeTrainIDCount(0);
         trainmanager.changeTrainCount(0);
-        trainmanager.changeStationCount(0);
         ordermanager.changeOrderCount(0);
         pendingorders.clear();
     } else {
@@ -64,9 +32,9 @@ Program::Program() : total_filename("total") {
         total_file.read(reinterpret_cast<char*>(&count), sizeofint);
         accountmanager.changeAccountCount(count);
         total_file.read(reinterpret_cast<char*>(&count), sizeofint);
-        trainmanager.changeTrainCount(count);
+        trainmanager.changeTrainIDCount(count);
         total_file.read(reinterpret_cast<char*>(&count), sizeofint);
-        trainmanager.changeStationCount(count);
+        trainmanager.changeTrainCount(count);
         total_file.read(reinterpret_cast<char*>(&count), sizeofint);
         ordermanager.changeOrderCount(count);
         total_file.read(reinterpret_cast<char*>(&count), sizeofint);
@@ -84,9 +52,9 @@ Program::~Program() {
     int count;
     count = accountmanager.getAccountCount();
     total_file.write(reinterpret_cast<char*>(&count), sizeofint);
-    count = trainmanager.getTrainCount();
+    count = trainmanager.getTrainIDCount();
     total_file.write(reinterpret_cast<char*>(&count), sizeofint);
-    count = trainmanager.getStationCount();
+    count = trainmanager.getTrainCount();
     total_file.write(reinterpret_cast<char*>(&count), sizeofint);
     count = ordermanager.getOrderCount();
     total_file.write(reinterpret_cast<char*>(&count), sizeofint);
@@ -274,7 +242,7 @@ void Program::AddTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, s
     // std::cout << '\n';
     // std::cout << "saleDate: " << saleDate.first << ' ' << saleDate.second << '\n';
     // std::cout << "type: " << type << std::endl;
-    if (trainmanager.getTrainIndexs(trainID).first != -1) {
+    if (trainmanager.getTrainIDIndex(trainID) != -1) {
         std::cout << "-1\n";
         return;
     }
@@ -285,68 +253,43 @@ void Program::AddTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, s
 
 void Program::DeleteTrain(sjtu::string<20> &trainID) {
     // std::cout << "trainID: " << trainID << std::endl;
-    sjtu::pair<int, int> indexs = trainmanager.getTrainIndexs(trainID);
-    if (indexs.first == -1) {
+    int index = trainmanager.getTrainIDIndex(trainID);
+    if (index == -1) {
         std::cout << "-1\n";
         return;
     }
-    Train train = trainmanager.getTrain(indexs.first);
-    if (train.state != 0) {
+    if (trainmanager.getTrainState(index) != 0) {
         std::cout << "-1\n";
         return;
     }
-    trainmanager.deleteTrain(trainID, indexs);
+    trainmanager.deleteTrain(trainID, index);
     std::cout << "0\n";
 }
 
-void Program::ReleaseTrain(const sjtu::string<20> &trainID) {
+void Program::ReleaseTrain(sjtu::string<20> &trainID) {
     // std::cout << "trainID: " << trainID << std::endl;
-    sjtu::pair<int, int> indexs = trainmanager.getTrainIndexs(trainID);
-    if (indexs.first == -1) {
+    int index = trainmanager.getTrainIDIndex(trainID);
+    if (index == -1) {
         std::cout << "-1\n";
         return;
     }
-    Train train = trainmanager.getTrain(indexs.first);
-    if (train.state != 0) {
+    if (trainmanager.getTrainState(index) != 0) {
         std::cout << "-1\n";
         return;
     }
-    trainmanager.releaseTrain(indexs);
+    trainmanager.releaseTrain(index);
     std::cout << "0\n";
 }
 
 void Program::QueryTrain(const sjtu::string<20> &trainID, int date) {
     // std::cout << "trainID: " << trainID << '\n';
     // std::cout << "Date: " << date << std::endl;
-    sjtu::pair<int, int> indexs = trainmanager.getTrainIndexs(trainID);
-    if (indexs.first == -1) {
+    int index = trainmanager.getTrainIDIndex(trainID);
+    if (index == -1) {
         std::cout << "-1\n";
         return;
     }
-    Train train = trainmanager.getTrain(indexs.first);
-    int startdate = train.leavingTimes[0] / daytime;
-    int offset = date - startdate;
-    if (offset < 0 || indexs.first + offset >= indexs.second || train.state == 2) {
-        std::cout << "-1\n";
-        return;
-    }
-    train = trainmanager.getTrain(indexs.first + offset);
-
-    int last = train.stationNum - 1;
-    std::cout << trainID << ' ' << train.type << '\n';
-    std::cout << trainmanager.getStation(train.stations[0]) << ' ' << "xx-xx xx:xx -> ";
-    printTime(train.leavingTimes[0]);
-    std::cout << ' ' << train.sum_prices[0] << ' ' << train.seats[0] << '\n';
-    for (int i = 1; i < last; i++) {
-        std::cout << trainmanager.getStation(train.stations[i]) << ' ';
-        printTime(train.arrivingTimes[i]);
-        std::cout << " -> ";
-        printTime(train.leavingTimes[i]);
-        std::cout << ' ' << train.sum_prices[i] << ' ' << train.seats[i] << '\n';
-    }
-    std::cout << trainmanager.getStation(train.stations[last]) << ' ';
-    printTime(train.arrivingTimes[last]);
-    std::cout << " -> xx-xx xx:xx " << train.sum_prices[last] << " x\n";
+    trainmanager.queryTrain(index, date);
 }
 
 void Program::QueryTicket(sjtu::string<30> &station1, sjtu::string<30> &station2, int date, bool query_type) {
@@ -358,54 +301,7 @@ void Program::QueryTicket(sjtu::string<30> &station1, sjtu::string<30> &station2
     // } else {
     //     std::cout << "cost" << std::endl;
     // }
-    bool (*compare)(const Ticket &lhs, const Ticket &rhs) = nullptr;
-    if (!query_type) {
-        compare = ordermanager.compareTicketTime;
-    } else {
-        compare = ordermanager.compareTicketCost;
-    }
-
-    int fromstation_index = trainmanager.findStationIndex(station1);
-    int tostation_index = trainmanager.findStationIndex(station2);
-    if (fromstation_index == -1 || tostation_index == -1) {
-        std::cout << "0\n";
-        return;
-    }
-    StationDate stationdate(fromstation_index, date);
-    sjtu::vector<sjtu::pair<int, int>> trainstations = trainmanager.getStationDateTrainStations(stationdate);
-    Train train;
-    sjtu::set<Ticket> tickets(compare);
-    Ticket ticket;
-    int trainindex, fromstation, tostation, available_seat;
-    for (sjtu::pair<int, int> trainstation : trainstations) {
-        trainindex = trainstation.first;
-        fromstation = trainstation.second;
-        train = trainmanager.getTrain(trainindex);
-        available_seat = train.seatNum;
-        for (tostation = trainstation.second + 1; tostation < train.stationNum; tostation++) {
-            if (train.seats[tostation - 1] < available_seat) {
-                available_seat = train.seats[tostation - 1];
-            }
-            if (train.stations[tostation] == tostation_index) {
-                ticket.trainID = train.trainID;
-                ticket.leavingtime = train.leavingTimes[fromstation];
-                ticket.arrivingtime = train.arrivingTimes[tostation];
-                ticket.price = train.sum_prices[tostation] - train.sum_prices[fromstation];
-                ticket.seat = available_seat;
-                tickets.insert(ticket);
-                break;
-            }
-        }
-    }
-    std::cout << tickets.size() << '\n';
-    for (Ticket &ticket : tickets) {
-        std::cout << ticket.trainID << ' ' << station1 << ' ';
-        printTime(ticket.leavingtime);
-        std::cout << " -> ";
-        std::cout << station2 << ' ';
-        printTime(ticket.arrivingtime);
-        std::cout << ' ' << ticket.price << ' ' << ticket.seat << '\n';
-    }
+    trainmanager.queryTicket(station1, station2, date, query_type);
 }
 
 void Program::QueryTransfer(sjtu::string<30> &station1, sjtu::string<30> station2, int date, bool query_type) {
@@ -417,91 +313,10 @@ void Program::QueryTransfer(sjtu::string<30> &station1, sjtu::string<30> station
     // } else {
     //     std::cout << "cose" << std::endl;
     // }
-    bool (*compare)(const Transfer &lhs, const Transfer &rhs) = nullptr;
-    if (!query_type) {
-        compare = ordermanager.compareTransferTime;
-    } else {
-        compare = ordermanager.compareTransferCost;
-    }
-
-    int fromstation_index = trainmanager.findStationIndex(station1);
-    int tostation_index = trainmanager.findStationIndex(station2);
-    sjtu::vector<sjtu::pair<int, int>> trainstations1, trainstations2;
-    trainstations1 = trainmanager.getStationDateTrainStations(StationDate(fromstation_index, date));
-    trainstations2 = trainmanager.getStationDateTrainStations(StationDate(tostation_index, -1));
-    Train train1, train2;
-    int fromstation1, fromstation2;
-    int tostation1, tostation2;
-    int transferstation_index;
-    int available_seat1, available_seat2;
-    Transfer transfer, ans;
-    bool get = false;
-    sjtu::map<int, StationInformation>::iterator it;
-    for (sjtu::pair<int, int> trainstation1 : trainstations1) {
-        train1 = trainmanager.getTrain(trainstation1.first);
-        fromstation1 = trainstation1.second;
-        available_seat1 = train1.seatNum;
-        sjtu::map<int, StationInformation> stationinformation;
-        for (tostation1 = fromstation1 + 1; tostation1 < train1.stationNum; tostation1++) {
-            if (train1.seats[tostation1 - 1] < available_seat1) {
-                available_seat1 = train1.seats[tostation1 - 1];
-            }
-            stationinformation.insert(sjtu::pair(train1.stations[tostation1], StationInformation(available_seat1, train1.sum_prices[tostation1] - train1.sum_prices[fromstation1], train1.arrivingTimes[tostation1])));
-        }
-        for (sjtu::pair<int, int> trainstation2 : trainstations2) {
-            train2 = trainmanager.getTrain(trainstation2.first);
-            if (train1.trainID == train2.trainID) continue;
-            tostation2 = trainstation2.second;
-            if (train1.leavingTimes[fromstation1] >= train2.arrivingTimes[tostation2]) continue;
-            available_seat2 = train2.seatNum;
-            for (fromstation2 = tostation2 - 1; fromstation2 >= 0; fromstation2--) {
-                if (train2.seats[fromstation2] < available_seat2) {
-                    available_seat2 = train2.seats[fromstation2];
-                }
-                it = stationinformation.find(train2.stations[fromstation2]);
-                if (it != stationinformation.end()) {
-                    if (it->second.arrivingtime <= train2.leavingTimes[fromstation2]) {
-
-                        transfer.train1ID = train1.trainID;
-                        transfer.train2ID = train2.trainID;
-                        transfer.transferstation = it->first;
-                        transfer.leavingtime1 = train1.leavingTimes[fromstation1];
-                        transfer.leavingtime2 = train2.leavingTimes[fromstation2];
-                        transfer.arrivingtime1 = it->second.arrivingtime;
-                        transfer.arrivingtime2 = train2.arrivingTimes[tostation2];
-                        transfer.price1 = it->second.price;
-                        transfer.price2 = train2.sum_prices[tostation2] - train2.sum_prices[fromstation2];
-                        transfer.seat1 = it->second.seat;
-                        transfer.seat2 = available_seat2;
-                        if (!get) {
-                            ans = transfer;
-                            get = true;
-                        } else if (compare(transfer, ans)) {
-                            ans = transfer;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    if (get) {
-        sjtu::string<30> transferstation = trainmanager.getStation(ans.transferstation);
-        std::cout << ans.train1ID << ' ' << station1 << ' ';
-        printTime(ans.leavingtime1);
-        std::cout << " -> " << transferstation << ' ';
-        printTime(ans.arrivingtime1);
-        std::cout << ' ' << ans.price1 << ' ' << ans.seat1 << '\n';
-        std::cout << ans.train2ID << ' ' << transferstation << ' ';
-        printTime(ans.leavingtime2);
-        std::cout << " -> " << station2 << ' ';
-        printTime(ans.arrivingtime2);
-        std::cout << ' ' << ans.price2 << ' ' << ans.seat2 << '\n';
-    } else {
-        std::cout << "0\n";
-    }
+    trainmanager.queryTransfer(station1, station2, date, query_type);
 }
 
-void Program::BuyTicket(const sjtu::string<20> &username, const sjtu::string<20> &trainID, int date, int ticketnum, sjtu::string<30> &station1, sjtu::string<30> &station2, bool buy_type) {
+void Program::BuyTicket(const sjtu::string<20> &username, sjtu::string<20> &trainID, int date, int ticketnum, sjtu::string<30> &station1, sjtu::string<30> &station2, bool buy_type) {
     // std::cout << "username: " << username << '\n';
     // std::cout << "trainID: " << trainID << '\n';
     // std::cout << "date: " << date << '\n';
@@ -517,61 +332,57 @@ void Program::BuyTicket(const sjtu::string<20> &username, const sjtu::string<20>
         std::cout << "-1\n";
         return;
     }
-    sjtu::pair<int, int> trainindexs = trainmanager.getTrainIndexs(trainID);
-    if (trainindexs.first == -1) {
+    int trainID_index = trainmanager.getTrainIDIndex(trainID);
+    if (trainID_index == -1) {
         std::cout << "-1\n";
         return;
     }
-    Train train = trainmanager.getTrain(trainindexs.first);
-
-    if (train.state != 1 || ticketnum > train.seatNum) {
+    
+    if (trainmanager.getTrainState(trainID_index) != 1 || ticketnum > trainmanager.getSeatNum(trainID_index)) {
         std::cout << "-1\n";
         return;
     }
-    int fromstation_index = trainmanager.findStationIndex(station1);
-    int tostation_index = trainmanager.findStationIndex(station2);
-    if (fromstation_index == -1 || tostation_index == -1) {
+    TrainBasic trainbasic = trainmanager.getTrainBasic(trainID_index);
+    int dayoff, origin, destination, train_index;
+    for (origin = 0; origin < trainbasic.stationNum && station1 != trainbasic.stations[origin]; origin++); 
+    if (origin == trainbasic.stationNum) {
         std::cout << "-1\n";
         return;
     }
-    int fromstation, tostation;
-    for (fromstation = 0; fromstation < train.stationNum && train.stations[fromstation] != fromstation_index; fromstation++) {}
-    for (tostation = 0; tostation < train.stationNum && train.stations[tostation] != tostation_index; tostation++) {}
-    if (fromstation == train.stationNum || tostation == train.stationNum || fromstation >= tostation) {
+    dayoff = date - trainbasic.leavingTimes[origin] / daytime;
+    if (dayoff < 0 || dayoff >= trainbasic.trainNum) {
         std::cout << "-1\n";
         return;
     }
-    int dateoffset = date - train.leavingTimes[fromstation] / daytime;
-    if (dateoffset < 0 || trainindexs.first + dateoffset >= trainindexs.second) {
+    for (destination = origin + 1; destination < trainbasic.stationNum && station2 != trainbasic.stations[destination]; destination++);
+    if (destination == trainbasic.stationNum) {
         std::cout << "-1\n";
         return;
     }
-    int trainindex = trainindexs.first + dateoffset;
-
-    train = trainmanager.getTrain(trainindex);
-    int available_seat = 1e5;
-    for (int station = fromstation; station < tostation; station++) {
-        if (train.seats[station] < available_seat) {
-            available_seat = train.seats[station];
+    train_index = trainbasic.headtrainindex + dayoff;
+    Train train = trainmanager.getTrain(train_index);
+    int seat = trainbasic.seatNum;
+    for (int i = origin; i < destination; i++) {
+        if (train.seats[i] < seat) {
+            seat = train.seats[i];
         }
     }
-    int price = train.sum_prices[tostation] - train.sum_prices[fromstation];
-    if (available_seat < ticketnum) {
+    if (seat < ticketnum) {
         if (!buy_type) {
             std::cout << "-1\n";
         } else {
             pendingorders.push_back(ordermanager.getOrderCount());
-            ordermanager.addPendingOrder(username, trainindex, fromstation, tostation, fromstation_index, tostation_index, train.leavingTimes[fromstation], train.arrivingTimes[tostation], price, ticketnum);
+            ordermanager.addPendingOrder(username, trainID, station1, station2, origin, destination, trainbasic.leavingTimes[origin] + dayoff * daytime, trainbasic.arrivingTimes[destination] + dayoff * daytime, trainbasic.sum_prices[destination] - trainbasic.sum_prices[origin], ticketnum, train_index);
             std::cout << "queue\n";
         }
         return;
     }
-    ordermanager.addSuccessOrder(username, trainindex, fromstation, tostation, fromstation_index, tostation_index, train.leavingTimes[fromstation], train.arrivingTimes[tostation], price, ticketnum);
-    for (int station = fromstation; station < tostation; station++) {
+    ordermanager.addSuccessOrder(username, trainID, station1, station2, origin, destination, trainbasic.leavingTimes[origin] + dayoff * daytime, trainbasic.arrivingTimes[destination] + dayoff * daytime, trainbasic.sum_prices[destination] - trainbasic.sum_prices[origin], ticketnum, train_index);
+    for (int station = origin; station < destination; station++) {
         train.seats[station] -= ticketnum;
     }
-    trainmanager.writeTrain(trainindex, train);
-    std::cout << (long long)(price) * ticketnum << '\n';
+    trainmanager.writeTrain(train_index, train);
+    std::cout << (trainbasic.sum_prices[destination] - trainbasic.sum_prices[origin]) * ticketnum << '\n';
 }
 
 void Program::QueryOrder(const sjtu::string<20> &username) {
@@ -586,7 +397,7 @@ void Program::QueryOrder(const sjtu::string<20> &username) {
         return;
     }
     Order order;
-    std::cout << orderindexs.size() << '\n';
+    std::cout << orderindexs.size() << std::endl;
     sjtu::vector<int>::iterator it = orderindexs.end();
     do {
         it--;
@@ -598,9 +409,9 @@ void Program::QueryOrder(const sjtu::string<20> &username) {
         } else if (order.state == 2) {
             std::cout << "[refunded] ";
         }
-        std::cout << trainmanager.getTrainID(order.train) << ' ' << trainmanager.getStation(order.fromstation_index) << ' ';
+        std::cout << order.trainID << ' ' << order.station1 << ' ';
         printTime(order.leavingtime);
-        std::cout << " -> " << trainmanager.getStation(order.tostation_index) << ' ';
+        std::cout << " -> " << order.station2 << ' ';
         printTime(order.arrivingtime);
         std::cout << ' ' << order.price << ' ' << order.num << '\n'; 
     } while(it != orderindexs.begin());
@@ -618,52 +429,53 @@ void Program::RefundTicket(const sjtu::string<20> &username, int ticketnum) {
         std::cout << "-1\n";
         return;
     }
-    Order order;
+    OrderView orderview;
     sjtu::vector<int>::iterator it = orderindexs.end() - ticketnum;
-    order = ordermanager.getOrder(*it);
-    if (order.state == 0) {
+    int state = ordermanager.getOrderState(*it);
+    orderview = ordermanager.getOrderView(*it);
+    if (state == 0) {
         Order pendingorder;
         Train train;
-        train = trainmanager.getTrain(order.train);
-        for (int station = order.fromstation; station < order.tostation; station++) {
-            train.seats[station] += order.num;
+        train = trainmanager.getTrain(orderview.train_index);
+        for (int station = orderview.origin; station < orderview.destination; station++) {
+            train.seats[station] += orderview.num;
         }
         sjtu::deque<int>::iterator it2 = pendingorders.begin();
         while (it2 != pendingorders.end()) {
             pendingorder = ordermanager.getOrder(*it2);
-            if (order.train != pendingorder.train) {
+            if (orderview.train_index != pendingorder.train_index) {
                 it2++;
                 continue;
             }
-            int available_seat = train.seatNum;
-            for (int station = pendingorder.fromstation; station < pendingorder.tostation; station++) {
+            int available_seat = 1e5;
+            for (int station = pendingorder.origin; station < pendingorder.destination; station++) {
                 if (train.seats[station] < available_seat) {
                     available_seat = train.seats[station];
                 }
             }
             if (available_seat >= pendingorder.num) {
-                for (int station = pendingorder.fromstation; station < pendingorder.tostation; station++) {
+                for (int station = pendingorder.origin; station < pendingorder.destination; station++) {
                     train.seats[station] -= pendingorder.num;
                 }
-                ordermanager.writeState(*it2, 0);
+                ordermanager.writeOrderState(*it2, 0);
                 it2 = pendingorders.erase(it2);
             } else {
                 it2++;
             }
         }
-        trainmanager.writeTrain(order.train, train);
-    } else if (order.state == 1) {
+        trainmanager.writeTrain(orderview.train_index, train);
+    } else if (state == 1) {
         for (auto it2 = pendingorders.begin(); it2 != pendingorders.end(); it2++) {
             if (*it2 == *it) {
                 pendingorders.erase(it2);
                 break;
             }
         }
-    } else if (order.state == 2) {
+    } else if (state == 2) {
         std::cout << "-1\n";
         return;
     }
-    ordermanager.writeState(*it, 2);
+    ordermanager.writeOrderState(*it, 2);
     std::cout << "0\n";
 }
 

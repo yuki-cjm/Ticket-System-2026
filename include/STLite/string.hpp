@@ -67,9 +67,7 @@ struct string {
     bool operator>=(const string &o) const { return std::strncmp(data, o.data, strlength) >= 0; }
 
     friend std::ostream &operator<<(std::ostream &os, const string &s) {
-        for (int i = 0; i < s.len; i++) {
-            os << s.data[i];
-        }
+        os.write(s.data, s.len);
         return os;
     }
 };

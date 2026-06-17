@@ -1,23 +1,25 @@
 #include <fstream>
 
 #include "OrderManager.hpp"
+#include "tools.hpp"
 #include "STLite/BPT.hpp"
 #include "STLite/string.hpp"
 
-void OrderManager::writeOrder(int index, int state, int train, int fromstation, int tostation, int fromstation_index, int tostation_index, int leavingtime, int arrivingtime, int price, int num) {
-    int buffer[10] = {state, train, fromstation, tostation, fromstation_index, tostation_index, leavingtime, arrivingtime, price, num};
-    order_file.seekp(index * sizeoforder);
-    order_file.write(reinterpret_cast<char*>(buffer), sizeoforder);
-}
-
-void OrderManager::writeOrder(int index, Order &order) {
-    writeOrder(index, order.state, order.train, order.fromstation, order.tostation, order.fromstation_index, order.tostation_index, order.leavingtime, order.arrivingtime, order.price, order.num);
-}
-
-void OrderManager::writeState(int index, int state) {
-    order_file.seekp(index * sizeoforder);
+void OrderManager::writeOrder(int index, int state, sjtu::string<20> &trainID, sjtu::string<30> &station1, sjtu::string<30> &station2, int origin, int destination, int leavingtime, int arrivingtime, int price, int num, int train_index) {
+    order_file.seekp(sizeofOrder * index);
     order_file.write(reinterpret_cast<char*>(&state), sizeofint);
+    order_file.write(reinterpret_cast<char*>(&leavingtime), sizeofint);
+    order_file.write(reinterpret_cast<char*>(&arrivingtime), sizeofint);
+    order_file.write(reinterpret_cast<char*>(&price), sizeofint);
+    order_file.write(reinterpret_cast<char*>(&num), sizeofint);
+    order_file.write(reinterpret_cast<char*>(&origin), sizeofint);
+    order_file.write(reinterpret_cast<char*>(&destination), sizeofint);
+    order_file.write(reinterpret_cast<char*>(&train_index), sizeofint);
+    order_file.write(reinterpret_cast<char*>(&trainID), sizeoftrainID);
+    order_file.write(reinterpret_cast<char*>(&station1), sizeofstation);
+    order_file.write(reinterpret_cast<char*>(&station2), sizeofstation);
 }
+
 
 
 
@@ -42,114 +44,46 @@ int OrderManager::getOrderCount() {
     return order_count;
 }
 
-bool OrderManager::compareTicketTime(const Ticket &lhs, const Ticket &rhs) {
-    if (lhs.arrivingtime - lhs.leavingtime < rhs.arrivingtime - rhs.leavingtime) {
-        return true;
-    }
-    if (lhs.arrivingtime - lhs.leavingtime > rhs.arrivingtime - rhs.leavingtime) {
-        return false;
-    }
-    return lhs.trainID < rhs.trainID;
-}
-
-bool OrderManager::compareTicketCost(const Ticket &lhs, const Ticket &rhs) {
-    if (lhs.price < rhs.price) {
-        return true;
-    }
-    if (lhs.price > rhs.price) {
-        return false;
-    }
-    return lhs.trainID < rhs.trainID;
-}
-
-bool OrderManager::compareTransferTime(const Transfer &lhs, const Transfer &rhs) {
-    if (lhs.arrivingtime2 - lhs.leavingtime1 < rhs.arrivingtime2 - rhs.leavingtime1) {
-        return true;
-    }
-    if (lhs.arrivingtime2 - lhs.leavingtime1 > rhs.arrivingtime2 - rhs.leavingtime1) {
-        return false;
-    }
-    if (lhs.price1 + lhs.price2 < rhs.price1 + rhs.price2) {
-        return true;
-    }
-    if (lhs.price1 + lhs.price2 > rhs.price1 + rhs.price2) {
-        return false;
-    }
-    if (lhs.train1ID < rhs.train1ID) {
-        return true;
-    }
-    if (lhs.train1ID > rhs.train1ID) {
-        return false;
-    }
-    return lhs.train2ID < rhs.train2ID;
-}
-
-bool OrderManager::compareTransferCost(const Transfer &lhs, const Transfer &rhs) {
-    if (lhs.price1 + lhs.price2 < rhs.price1 + rhs.price2) {
-        return true;
-    }
-    if (lhs.price1 + lhs.price2 > rhs.price1 + rhs.price2) {
-        return false;
-    }
-    if (lhs.arrivingtime2 - lhs.leavingtime1 < rhs.arrivingtime2 - rhs.leavingtime1) {
-        return true;
-    }
-    if (lhs.arrivingtime2 - lhs.leavingtime1 > rhs.arrivingtime2 - rhs.leavingtime1) {
-        return false;
-    }
-    if (lhs.arrivingtime1 - lhs.leavingtime1 + lhs.arrivingtime2 - lhs.leavingtime2 > rhs.arrivingtime1 - rhs.leavingtime1 + rhs.arrivingtime2 - rhs.leavingtime2) {
-        return false;
-    }
-    if (lhs.train1ID < rhs.train1ID) {
-        return true;
-    }
-    if (lhs.train1ID > rhs.train1ID) {
-        return false;
-    }
-    return lhs.train2ID < rhs.train2ID;
-}
-
-Order OrderManager::getOrder(int index) {
-    int buffer[10];
-    order_file.seekg(index * sizeoforder);
-    order_file.read(reinterpret_cast<char*>(buffer), sizeoforder);
-    Order order;
-    order.state = buffer[0];
-    order.train = buffer[1];
-    order.fromstation = buffer[2];
-    order.tostation = buffer[3];
-    order.fromstation_index = buffer[4];
-    order.tostation_index = buffer[5];
-    order.leavingtime = buffer[6];
-    order.arrivingtime = buffer[7];
-    order.price = buffer[8];
-    order.num = buffer[9];
-    return order;
-}
-
-int OrderManager::getState(int index) {
-    int state;
-    order_file.seekg(index * sizeoforder);
-    order_file.read(reinterpret_cast<char*>(&state), sizeofint);
-    return state;
-}
-
-
-
-void OrderManager::addPendingOrder(const sjtu::string<20> &username, int train, int fromstation, int tostation, int fromstation_index, int tostation_index, int leavingtime, int arrivingtime, int price, int num) {
-    writeOrder(order_count, 1, train, fromstation, tostation, fromstation_index, tostation_index, leavingtime, arrivingtime, price, num);
+void OrderManager::addPendingOrder(const sjtu::string<20> &username, sjtu::string<20> &trainID, sjtu::string<30> &station1, sjtu::string<30> &station2, int origin, int destination, int leavingtime, int arrivingtime, int price, int num, int train_index) {
+    writeOrder(order_count, 1, trainID, station1, station2, origin, destination, leavingtime, arrivingtime, price, num, train_index);
     userorder_bpt.insert(username, order_count);
     order_count++;
 }
 
-void OrderManager::addSuccessOrder(const sjtu::string<20> &username, int train, int fromstation, int tostation, int fromstation_index, int tostation_index, int leavingtime, int arrivingtime, int price, int num) {
-    writeOrder(order_count, 0, train, fromstation, tostation, fromstation_index, tostation_index, leavingtime, arrivingtime, price, num);
+void OrderManager::addSuccessOrder(const sjtu::string<20> &username, sjtu::string<20> &trainID, sjtu::string<30> &station1, sjtu::string<30> &station2, int origin, int destination, int leavingtime, int arrivingtime, int price, int num, int train_index) {
+    writeOrder(order_count, 0, trainID, station1, station2, origin, destination, leavingtime, arrivingtime, price, num, train_index);
     userorder_bpt.insert(username, order_count);
     order_count++;
 }
 
 sjtu::vector<int> OrderManager::getOrderIndexs(const sjtu::string<20> &username) {
     return userorder_bpt.find(username);
+}
+
+Order OrderManager::getOrder(int index) {
+    Order order;
+    order_file.seekg(sizeofOrder * index);
+    order_file.read(reinterpret_cast<char*>(&order), sizeofOrder);
+    return order;
+}
+
+OrderView OrderManager::getOrderView(int index) {
+    OrderView orderview;
+    order_file.seekg(sizeofOrder * index + 3 * sizeofint);
+    order_file.read(reinterpret_cast<char*>(&orderview), sizeofOrderView);
+    return orderview;
+}
+
+int OrderManager::getOrderState(int index) {
+    int state;
+    order_file.seekg(sizeofOrder * index);
+    order_file.read(reinterpret_cast<char*>(&state), sizeofint);
+    return state;
+}
+
+void OrderManager::writeOrderState(int index, int state) {
+    order_file.seekp(sizeofOrder * index);
+    order_file.write(reinterpret_cast<char*>(&state), sizeofint);
 }
 
 void OrderManager::clean() {
