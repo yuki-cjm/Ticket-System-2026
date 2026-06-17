@@ -4,10 +4,29 @@
 
 #include "STLite/string.hpp"
 
+inline constexpr int UserNameLength = 20;
+inline constexpr int PassWordLength = 30;
+inline constexpr int minNameLength = 6;
+inline constexpr int NameLength = 15;
+inline constexpr int MailAddrLength = 30;
+inline constexpr int TrainIDLength = 20;
+inline constexpr int StationLength = 30;
+
+inline constexpr int maxPrivilege = 10;
+inline constexpr int minStationNum = 2;
+inline constexpr int maxStationNum = 100;
+inline constexpr int maxSeatNum = 100000;
+inline constexpr int maxPrice = 100000;
+inline constexpr int maxTravelTime = 10000;
+inline constexpr int maxStopoverTime = 10000;
+
 inline constexpr int sizeofint = sizeof(int);
 inline constexpr int sizeofchar = sizeof(char);
-inline constexpr int sizeoftrainID = sizeof(sjtu::string<20>);
-inline constexpr int sizeofstation = sizeof(sjtu::string<30>);
+inline constexpr int sizeoftrainID = sizeof(sjtu::string<TrainIDLength>);
+inline constexpr int sizeofstation = sizeof(sjtu::string<StationLength>);
+inline constexpr int sizeofpassword = sizeof(sjtu::string<PassWordLength>);
+inline constexpr int sizeofname = sizeof(sjtu::string<NameLength>);
+inline constexpr int sizeofmailAddr = sizeof(sjtu::string<MailAddrLength>);
 inline constexpr int hourtime = 60;
 inline constexpr int daytime = 1440;
 inline constexpr int monthday[13] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};

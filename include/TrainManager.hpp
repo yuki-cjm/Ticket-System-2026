@@ -7,15 +7,15 @@
 #include "STLite/BPT.hpp"
 #include "STLite/pair.hpp"
 #include "STLite/string.hpp"
-#include "utils/tools.hpp"
+#include "utils/constants.hpp"
 
 struct TrainBasic {
     int state; // 0->unreleased, 1->released, 2->deleted
     int headtrainindex, trainNum;
-    int leavingTimes[100], arrivingTimes[100], sum_prices[100];
+    int leavingTimes[maxStationNum], arrivingTimes[maxStationNum], sum_prices[maxStationNum];
     int stationNum, seatNum;
-    sjtu::string<20> trainID;
-    sjtu::string<30> stations[100];
+    sjtu::string<TrainIDLength> trainID;
+    sjtu::string<StationLength> stations[maxStationNum];
     char type;
 
     TrainBasic() = default;
@@ -25,13 +25,13 @@ struct TrainBasic {
 struct TrainView {
     int state; // 0->unreleased, 1->released, 2->deleted
     int headtrainindex, trainNum;
-    int leavingTimes[100], arrivingTimes[100], sum_prices[100];
+    int leavingTimes[maxStationNum], arrivingTimes[maxStationNum], sum_prices[maxStationNum];
     int stationNum, seatNum;
-    sjtu::string<20> trainID;
+    sjtu::string<TrainIDLength> trainID;
 };
 
 struct Train {
-    int seats[99];
+    int seats[maxStationNum - 1];
 };
 
 struct StationInformation {
@@ -42,15 +42,15 @@ struct StationInformation {
 };
 
 struct Ticket {
-    sjtu::string<20> trainID;
+    sjtu::string<TrainIDLength> trainID;
     int leavingtime, arrivingtime, price, seat;
 
     Ticket() = default;
 };
 
 struct Transfer {
-    sjtu::string<20> train1ID, train2ID;
-    sjtu::string<30> transferstation;
+    sjtu::string<TrainIDLength> train1ID, train2ID;
+    sjtu::string<StationLength> transferstation;
     int leavingtime1, arrivingtime1, price1, seat1;
     int leavingtime2, arrivingtime2, price2, seat2;
 
@@ -64,13 +64,13 @@ class TrainManager {
     int trainID_count, train_count;
     std::string train_filename, trainID_filename;
     std::fstream train_file, trainID_file;
-    BplusTree<sjtu::string<20>, int> trainID_bpt;
-    BplusTree<sjtu::string<30>, sjtu::pair<int, int>> station_bpt;
-    BplusTree<sjtu::pair<sjtu::string<30>, sjtu::string<30>>, sjtu::pair<int, sjtu::pair<int, int>>> stationpair_bpt;
+    BplusTree<sjtu::string<TrainIDLength>, int> trainID_bpt;
+    BplusTree<sjtu::string<StationLength>, sjtu::pair<int, int>> station_bpt;
+    BplusTree<sjtu::pair<sjtu::string<StationLength>, sjtu::string<StationLength>>, sjtu::pair<int, sjtu::pair<int, int>>> stationpair_bpt;
 
-    static const int sizeofTrainBasic = sizeofint * 305 + sizeofchar + sizeoftrainID + 100 * sizeofstation;
-    static const int sizeofTrain = sizeofint * 100;
-    static const int sizeofTrainView = sizeofint * 305 + sizeoftrainID;
+    static const int sizeofTrainBasic = sizeofint * (5 + 3 * maxStationNum) + sizeofchar + sizeoftrainID + maxStationNum * sizeofstation;
+    static const int sizeofTrain = sizeofint * (maxStationNum - 1);
+    static const int sizeofTrainView = sizeofint * (5 + 3 * maxStationNum) + sizeoftrainID;
 
     static bool compareTicketTime(const Ticket &lhs, const Ticket &rhs);
     static bool compareTicketCost(const Ticket &lhs, const Ticket &rhs);
@@ -86,14 +86,14 @@ class TrainManager {
     void changeTrainCount(int count);
     int getTrainCount();
 
-    int getTrainIDIndex(const sjtu::string<20> &trainID);
-    void addTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::string<30> *stations, int *prices, int startTime, int *travelTimes, int *stopoverTimes, sjtu::pair<int, int> saleDate, char type);
+    int getTrainIDIndex(const sjtu::string<TrainIDLength> &trainID);
+    void addTrain(sjtu::string<TrainIDLength> &trainID, int stationNum, int seatNum, sjtu::string<StationLength> *stations, int *prices, int startTime, int *travelTimes, int *stopoverTimes, sjtu::pair<int, int> saleDate, char type);
     int getTrainState(int index);
-    void deleteTrain(sjtu::string<20> &trainID, int index);
+    void deleteTrain(sjtu::string<TrainIDLength> &trainID, int index);
     void releaseTrain(int index);
     void queryTrain(int trainID_index, int date);
-    void queryTicket(sjtu::string<30> &station1, sjtu::string<30> &station2, int date, bool query_type);
-    void queryTransfer(sjtu::string<30> &station1, sjtu::string<30> &station2, int date, bool query_type);
+    void queryTicket(sjtu::string<StationLength> &station1, sjtu::string<StationLength> &station2, int date, bool query_type);
+    void queryTransfer(sjtu::string<StationLength> &station1, sjtu::string<StationLength> &station2, int date, bool query_type);
     int getSeatNum(int trainID_index);
     TrainBasic getTrainBasic(int trainID_index);
     Train getTrain(int train_index);

@@ -4,11 +4,12 @@
 
 #include "STLite/BPT.hpp"
 #include "STLite/string.hpp"
+#include "utils/constants.hpp"
 
 struct Account {
-    sjtu::string<30> password;
-    sjtu::string<15> name;
-    sjtu::string<30> mailAddr;
+    sjtu::string<PassWordLength> password;
+    sjtu::string<NameLength> name;
+    sjtu::string<MailAddrLength> mailAddr;
     int privilege;
 };
 
@@ -17,7 +18,7 @@ class AccountManager {
     int account_count;
     std::string account_filename;
     std::fstream account_file;
-    BplusTree<sjtu::string<20>, int> account_bpt;
+    BplusTree<sjtu::string<UserNameLength>, int> account_bpt;
     static const int account_size = sizeof(Account);
 
   public:

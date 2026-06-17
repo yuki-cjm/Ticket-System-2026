@@ -12,6 +12,7 @@
 #include "STLite/map.hpp"
 #include "STLite/string.hpp"
 #include "STLite/deque.hpp"
+#include "utils/constants.hpp"
 
 class Program {
   private:
@@ -21,7 +22,7 @@ class Program {
     TrainManager trainmanager;
     OrderManager ordermanager;
     Parser parser;
-    sjtu::map<sjtu::string<20>, int> loginrecorder;
+    sjtu::map<sjtu::string<UserNameLength>, int> loginrecorder;
     sjtu::deque<int> pendingorders;
 
     bool programEnd_;
@@ -35,24 +36,24 @@ class Program {
     void programEnd();
     bool programRun();
 
-    void AddUser(sjtu::string<20> &cur_username, sjtu::string<20> &username, sjtu::string<30> &password, sjtu::string<15> &name, sjtu::string<30> &mailAddr, int privilege);
-    void Login(const sjtu::string<20> &username, const sjtu::string<30> &password);
-    void Logout(const sjtu::string<20> &username);
-    void QueryProfile(const sjtu::string<20> &cur_username, const sjtu::string<20> &username);
-    void ModifyProfile(const sjtu::string<20> &cur_username, const sjtu::string<20> &username, const sjtu::string<30> &password, const sjtu::string<15> &name, const sjtu::string<30> &mailAddr, int privilege);
+    void AddUser(sjtu::string<UserNameLength> &cur_username, sjtu::string<UserNameLength> &username, sjtu::string<PassWordLength> &password, sjtu::string<NameLength> &name, sjtu::string<MailAddrLength> &mailAddr, int privilege);
+    void Login(const sjtu::string<UserNameLength> &username, const sjtu::string<PassWordLength> &password);
+    void Logout(const sjtu::string<UserNameLength> &username);
+    void QueryProfile(const sjtu::string<UserNameLength> &cur_username, const sjtu::string<UserNameLength> &username);
+    void ModifyProfile(const sjtu::string<UserNameLength> &cur_username, const sjtu::string<UserNameLength> &username, const sjtu::string<PassWordLength> &password, const sjtu::string<NameLength> &name, const sjtu::string<MailAddrLength> &mailAddr, int privilege);
 
-    void AddTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::string<30> *stations, int *prices, int startTime, int *travelTimes, int *stopoverTimes, sjtu::pair<int, int> saleDate, char type);
+    void AddTrain(sjtu::string<TrainIDLength> &trainID, int stationNum, int seatNum, sjtu::string<StationLength> *stations, int *prices, int startTime, int *travelTimes, int *stopoverTimes, sjtu::pair<int, int> saleDate, char type);
 
-    void DeleteTrain(sjtu::string<20> &trainID);
-    void ReleaseTrain(sjtu::string<20> &trainID);
+    void DeleteTrain(sjtu::string<TrainIDLength> &trainID);
+    void ReleaseTrain(sjtu::string<TrainIDLength> &trainID);
 
-    void QueryTrain(const sjtu::string<20> &trainID, int date);
-    void QueryTicket(sjtu::string<30> &station1, sjtu::string<30> &station2, int date, bool query_type);
-    void QueryTransfer(sjtu::string<30> &station1, sjtu::string<30> station2, int date, bool query_type);
-    void BuyTicket(const sjtu::string<20> &username, sjtu::string<20> &trainID, int date, int ticketnum, sjtu::string<30> &station1, sjtu::string<30> &station2, bool buy_type);
-    void QueryOrder(const sjtu::string<20> &username);
+    void QueryTrain(const sjtu::string<TrainIDLength> &trainID, int date);
+    void QueryTicket(sjtu::string<StationLength> &station1, sjtu::string<StationLength> &station2, int date, bool query_type);
+    void QueryTransfer(sjtu::string<StationLength> &station1, sjtu::string<StationLength> station2, int date, bool query_type);
+    void BuyTicket(const sjtu::string<UserNameLength> &username, sjtu::string<TrainIDLength> &trainID, int date, int ticketnum, sjtu::string<StationLength> &station1, sjtu::string<StationLength> &station2, bool buy_type);
+    void QueryOrder(const sjtu::string<UserNameLength> &username);
 
-    void RefundTicket(const sjtu::string<20> &username, int ticketnum);
+    void RefundTicket(const sjtu::string<UserNameLength> &username, int ticketnum);
 
     void Clean();
     void Exit();

@@ -7,7 +7,7 @@
 #include "STLite/pair.hpp"
 #include "STLite/string.hpp"
 #include "STLite/set.hpp"
-#include "utils/tools.hpp"
+#include "utils/constants.hpp"
 
 bool TrainManager::compareTicketTime(const Ticket &lhs, const Ticket &rhs) {
     if (lhs.arrivingtime - lhs.leavingtime < rhs.arrivingtime - rhs.leavingtime) { return true; }
@@ -46,7 +46,7 @@ int TrainManager::getSeat(int train_index, int origin, int destination) {
     Train train;
     train_file.seekg(sizeofTrain * train_index);
     train_file.read(reinterpret_cast<char*>(&train), sizeofTrain);
-    int seat = 1e5;
+    int seat = maxSeatNum;
     for (int i = origin; i < destination; i++) {
         if (train.seats[i] < seat) {
             seat = train.seats[i];
@@ -106,7 +106,7 @@ int TrainManager::getTrainIDIndex(const sjtu::string<20> &trainID) {
 }
 
 
-void TrainManager::addTrain(sjtu::string<20> &trainID, int stationNum, int seatNum, sjtu::string<30> *stations, int *prices, int startTime, int *travelTimes, int *stopoverTimes, sjtu::pair<int, int> saleDate, char type) {
+void TrainManager::addTrain(sjtu::string<TrainIDLength> &trainID, int stationNum, int seatNum, sjtu::string<StationLength> *stations, int *prices, int startTime, int *travelTimes, int *stopoverTimes, sjtu::pair<int, int> saleDate, char type) {
     TrainBasic train;
     train.trainID = trainID;
     train.stationNum = stationNum;
@@ -147,7 +147,7 @@ int TrainManager::getTrainState(int index) {
     return state;
 }
 
-void TrainManager::deleteTrain(sjtu::string<20> &trainID, int index) {
+void TrainManager::deleteTrain(sjtu::string<TrainIDLength> &trainID, int index) {
     int state = 2;
     trainID_file.seekp(sizeofTrainBasic * index);
     trainID_file.write(reinterpret_cast<char*>(&state), sizeofint);
@@ -196,13 +196,13 @@ void TrainManager::queryTrain(int trainID_index, int date) {
         std::cout << "-1\n";
         return;
     }
-    trainID_file.read(reinterpret_cast<char*>(&trainbasic.leavingTimes[1]), sizeofint * 99);
-    trainID_file.read(reinterpret_cast<char*>(&trainbasic.arrivingTimes[0]), sizeofint * 100);
-    trainID_file.read(reinterpret_cast<char*>(&trainbasic.sum_prices[0]), sizeofint * 100);
+    trainID_file.read(reinterpret_cast<char*>(&trainbasic.leavingTimes[1]), sizeofint * (maxStationNum - 1));
+    trainID_file.read(reinterpret_cast<char*>(&trainbasic.arrivingTimes[0]), sizeofint * maxStationNum);
+    trainID_file.read(reinterpret_cast<char*>(&trainbasic.sum_prices[0]), sizeofint * maxStationNum);
     trainID_file.read(reinterpret_cast<char*>(&trainbasic.stationNum), sizeofint);
     trainID_file.read(reinterpret_cast<char*>(&trainbasic.seatNum), sizeofint);
     trainID_file.read(reinterpret_cast<char*>(&trainbasic.trainID), sizeoftrainID);
-    trainID_file.read(reinterpret_cast<char*>(&trainbasic.stations[0]), sizeofstation * 100);
+    trainID_file.read(reinterpret_cast<char*>(&trainbasic.stations[0]), sizeofstation * maxStationNum);
     trainID_file.read(reinterpret_cast<char*>(&trainbasic.type), sizeofchar);
     int timeoff = dayoff * daytime;
     int last = trainbasic.stationNum - 1;
@@ -244,7 +244,7 @@ void TrainManager::queryTrain(int trainID_index, int date) {
     }
 }
 
-void TrainManager::queryTicket(sjtu::string<30> &station1, sjtu::string<30> &station2, int date, bool query_type) {
+void TrainManager::queryTicket(sjtu::string<StationLength> &station1, sjtu::string<StationLength> &station2, int date, bool query_type) {
     bool (*compare)(const Ticket &lhs, const Ticket &rhs) = nullptr;
     if (!query_type) {
         compare = compareTicketTime;
@@ -284,7 +284,7 @@ void TrainManager::queryTicket(sjtu::string<30> &station1, sjtu::string<30> &sta
     }
 }
 
-void TrainManager::queryTransfer(sjtu::string<30> &station1, sjtu::string<30> &station2, int date, bool query_type) {
+void TrainManager::queryTransfer(sjtu::string<StationLength> &station1, sjtu::string<StationLength> &station2, int date, bool query_type) {
     bool (*compare)(const Transfer &lhs, const Transfer &rhs) = nullptr;
     if (!query_type) {
         compare = compareTransferTime;
@@ -299,7 +299,7 @@ void TrainManager::queryTransfer(sjtu::string<30> &station1, sjtu::string<30> &s
     Train train;
     Transfer transfer, ans;
     bool get = false;
-    sjtu::string<30> stations[100];
+    sjtu::string<StationLength> stations[maxStationNum];
     for (sjtu::pair<int, int> trainstation : trainstations) {
         trainID_index1 = trainstation.first;
         origin = trainstation.second;
@@ -309,7 +309,7 @@ void TrainManager::queryTransfer(sjtu::string<30> &station1, sjtu::string<30> &s
         if (dayoff1 < 0 || dayoff1 >= trainview1.trainNum) continue;
         transfer.train1ID = trainview1.trainID;
         transfer.leavingtime1 = trainview1.leavingTimes[origin] + dayoff1 * daytime;
-        trainID_file.read(reinterpret_cast<char*>(&stations[0]), sizeofstation * 100);
+        trainID_file.read(reinterpret_cast<char*>(&stations[0]), sizeofstation * maxStationNum);
         train_file.seekg(sizeofTrain * (trainview1.headtrainindex + dayoff1));
         train_file.read(reinterpret_cast<char*>(&train), sizeofTrain);
         transfer.seat1 = trainview1.seatNum;
@@ -364,7 +364,7 @@ void TrainManager::queryTransfer(sjtu::string<30> &station1, sjtu::string<30> &s
 
 int TrainManager::getSeatNum(int trainID_index) {
     int seatNum;
-    trainID_file.seekg(sizeofTrainBasic * trainID_index + 304 * sizeofint);
+    trainID_file.seekg(sizeofTrainBasic * trainID_index + (4 + 3 * maxStationNum) * sizeofint);
     trainID_file.read(reinterpret_cast<char*>(&seatNum), sizeofint);
     return seatNum;
 }

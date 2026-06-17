@@ -3,9 +3,9 @@
 #include "OrderManager.hpp"
 #include "STLite/BPT.hpp"
 #include "STLite/string.hpp"
-#include "utils/tools.hpp"
+#include "utils/constants.hpp"
 
-void OrderManager::writeOrder(int index, int state, sjtu::string<20> &trainID, sjtu::string<30> &station1, sjtu::string<30> &station2, int origin, int destination, int leavingtime, int arrivingtime, int price, int num, int train_index) {
+void OrderManager::writeOrder(int index, int state, sjtu::string<TrainIDLength> &trainID, sjtu::string<StationLength> &station1, sjtu::string<StationLength> &station2, int origin, int destination, int leavingtime, int arrivingtime, int price, int num, int train_index) {
     order_file.seekp(sizeofOrder * index);
     order_file.write(reinterpret_cast<char*>(&state), sizeofint);
     order_file.write(reinterpret_cast<char*>(&leavingtime), sizeofint);
@@ -44,19 +44,19 @@ int OrderManager::getOrderCount() {
     return order_count;
 }
 
-void OrderManager::addPendingOrder(const sjtu::string<20> &username, sjtu::string<20> &trainID, sjtu::string<30> &station1, sjtu::string<30> &station2, int origin, int destination, int leavingtime, int arrivingtime, int price, int num, int train_index) {
+void OrderManager::addPendingOrder(const sjtu::string<UserNameLength> &username, sjtu::string<TrainIDLength> &trainID, sjtu::string<StationLength> &station1, sjtu::string<StationLength> &station2, int origin, int destination, int leavingtime, int arrivingtime, int price, int num, int train_index) {
     writeOrder(order_count, 1, trainID, station1, station2, origin, destination, leavingtime, arrivingtime, price, num, train_index);
     userorder_bpt.insert(username, order_count);
     order_count++;
 }
 
-void OrderManager::addSuccessOrder(const sjtu::string<20> &username, sjtu::string<20> &trainID, sjtu::string<30> &station1, sjtu::string<30> &station2, int origin, int destination, int leavingtime, int arrivingtime, int price, int num, int train_index) {
+void OrderManager::addSuccessOrder(const sjtu::string<UserNameLength> &username, sjtu::string<TrainIDLength> &trainID, sjtu::string<StationLength> &station1, sjtu::string<StationLength> &station2, int origin, int destination, int leavingtime, int arrivingtime, int price, int num, int train_index) {
     writeOrder(order_count, 0, trainID, station1, station2, origin, destination, leavingtime, arrivingtime, price, num, train_index);
     userorder_bpt.insert(username, order_count);
     order_count++;
 }
 
-sjtu::vector<int> OrderManager::getOrderIndexs(const sjtu::string<20> &username) {
+sjtu::vector<int> OrderManager::getOrderIndexs(const sjtu::string<UserNameLength> &username) {
     return userorder_bpt.find(username);
 }
 

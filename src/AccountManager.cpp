@@ -4,11 +4,7 @@
 #include "STLite/vector.hpp"
 #include "STLite/BPT.hpp"
 #include "STLite/string.hpp"
-
-constexpr int sizeofpassword = sizeof(sjtu::string<30>);
-constexpr int sizeofname = sizeof(sjtu::string<15>);
-constexpr int sizeofmailAddr = sizeof(sjtu::string<30>);
-constexpr int sizeofint = sizeof(int);
+#include "utils/constants.hpp"
 
 AccountManager::AccountManager() : account_filename("accountdata"), account_bpt("accountbasic", "accountindex") {
     account_file.open(account_filename, std::ios::in | std::ios::out | std::ios::binary);
@@ -31,7 +27,7 @@ int AccountManager::getAccountCount() {
     return account_count;
 }
 
-int AccountManager::getIndex(const sjtu::string<20> &username) {
+int AccountManager::getIndex(const sjtu::string<UserNameLength> &username) {
     sjtu::vector<int> indexs = account_bpt.find(username);
     if (!indexs.size()) {
         return -1;
@@ -39,7 +35,7 @@ int AccountManager::getIndex(const sjtu::string<20> &username) {
     return indexs[0];
 }
 
-void AccountManager::addAccount(sjtu::string<20> &username, sjtu::string<30> &password, sjtu::string<15> &name, sjtu::string<30> &mailAddr, int privilege) {
+void AccountManager::addAccount(sjtu::string<UserNameLength> &username, sjtu::string<PassWordLength> &password, sjtu::string<NameLength> &name, sjtu::string<MailAddrLength> &mailAddr, int privilege) {
     int index = account_count;
     account_count++;
     account_bpt.insert(username, index);
