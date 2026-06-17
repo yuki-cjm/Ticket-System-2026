@@ -16,7 +16,7 @@ class BplusTree {
     static constexpr int desired_fanout = 64;
     static constexpr int raw_node = (1 + sizeofint * 3) + desired_fanout * (sizeofT + sizeofU + sizeofint) + sizeofint;
     static constexpr int sizeofNode = raw_node <= 4096 ? 4096 : ((raw_node + 4095) / 4096) * 4096;
-    static constexpr int cache_size = 1024;
+    static constexpr int cache_size = 512;
 
     static constexpr int Isize = (sizeofNode - 1 - sizeofint * 3) / (sizeofT + sizeofU + sizeofint);
     static constexpr int Lsize = (sizeofNode - 1 - sizeofint * 3) / (sizeofT + sizeofU);
